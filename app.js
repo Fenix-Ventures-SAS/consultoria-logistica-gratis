@@ -3,6 +3,10 @@ const CONFIG={modoPrueba:true,api:''};
 // Si alguien mete la página dentro de otra (clickjacking), se sale del marco
 if(window.top!==window.self){try{window.top.location=window.location.href}catch(e){document.documentElement.style.display='none'}}
 // Origen del lead: UTM, fbclid e ids de Meta del enlace (se guardan con la respuesta cuando el formulario se conecte)
+// Fuente del lead según el subdominio: form{fuente}.fenixventures.co (p. ej. formpmeta.fenixventures.co).
+// Para probar sin dominio se acepta ?fuente=pmeta. Si no coincide con ninguna, queda como "directo".
+const FUENTES={pmeta:'Pauta Meta',ptiktok:'Pauta TikTok',pgoogle:'Pauta Google',ig:'Orgánico Instagram',tkt:'Orgánico TikTok',lkd:'LinkedIn',dropi:'Referidos Dropi',ref:'Referidos',evon:'Eventos online',evfis:'Eventos físicos'};
+const FUENTE=(()=>{const m=location.hostname.match(/^form([a-z]+)\./);const f=(m?m[1]:new URLSearchParams(location.search).get('fuente')||'').toLowerCase();return Object.hasOwn(FUENTES,f)?f:'directo'})();
 const ORIGEN=(()=>{const q=new URLSearchParams(location.search),o={};['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid','campaign_id','adset_id','ad_id'].forEach(k=>{const v=q.get(k);if(v)o[k]=v.slice(0,300)});return o})();
 const GT0={f:'ventas',op:'gt',v:0};
 const PLATS=['dropi','effi','hoko','mastershop','otra'],CANAL_OK=['pagina','whatsapp_redes','pagina_whatsapp'],PAUTA_OK=['meta','tiktok','google'];
