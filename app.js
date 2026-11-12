@@ -173,8 +173,8 @@ function render(){const c=$('card');c.classList.remove('flood');
   if(cur===-1){c.innerHTML='<div class="cover"><div class="emb"><img src="fenix-emblema.webp" alt="Fénix Ventures"></div><div><p class="fq">Consultoría Logística Gratis</p><p class="fh" style="font-size:14.5px;line-height:1.6">Responde unas preguntas rápidas.<br>Empieza y vemos si quedas elegido.</p><button class="fbtn" id="go">Empezar</button><p class="trust">'+ICO.gift+'Obsequio de <img src="dropi-logo.webp" alt="Dropi"></p></div><div class="cend"></div></div>';
     $('go').addEventListener('click',start);sizeEmb();return}
   const sc=SCREENS[cur];const steps=sc.filter(s=>vis(s));const s=steps[0];
-  const backBtn=hist.length?'<button class="flink" id="bk">← Atrás</button>':'<span></span>';
-  const wire=()=>{if(hist.length)$('bk').addEventListener('click',back)};
+  const backBtn='<button class="flink" id="bk">← Atrás</button>';
+  const wire=()=>{$('bk').addEventListener('click',back)};
   if(s.type==='contact'){const seg=A.chatbot_b3==='chatbot';const pc=paisBy(C.pais||'CO');
     const opt=iso=>{const p=paisBy(iso);return '<option value="'+iso+'"'+(pc&&iso===pc[3]?' selected':'')+'>'+p[4]+' '+esc(p[2])+' (+'+p[0]+')</option>'};
     c.innerHTML='<p class="fcount">Tus datos</p><p class="fq">'+(seg?'Te dejamos en seguimiento 💚 ¿Cómo te llamas?':'¿Cómo te llamas?')+'</p><input class="finput" id="fn" autocomplete="name" placeholder="Ana Gómez" value="'+esc(C.nombre||'')+'"><label class="flabel" for="ph">'+(seg?'¿A qué WhatsApp te escribimos cuando estés vendiendo más?':'¿A qué número te llamamos? Que tenga WhatsApp.')+'</label><div class="ftel"><div class="fcc'+(pc?'':' vacio')+'" id="ccb"><span class="flag" id="ccf">'+(pc?pc[4]:'🌎')+'</span><span id="ccv">'+(pc?'+'+pc[0]:'País')+'</span>'+ICO.chev+'<select id="cc" aria-label="País del celular"><optgroup label="Los más frecuentes">'+PAIS_ORDEN.map(opt).join('')+'</optgroup><optgroup label="Todos los países">'+MUNDO.filter(m=>!PAIS_ORDEN.includes(m[0])).map(m=>opt(m[0])).join('')+'</optgroup></select></div><input class="finput" id="ph" inputmode="tel" autocomplete="tel-national" placeholder="'+(pc?pc[6]:'Número de celular')+'" value="'+esc(C.num||'')+'"></div>'+
@@ -192,8 +192,8 @@ function render(){const c=$('card');c.classList.remove('flood');
     if(T)requestAnimationFrame(tick);else{$('vsp').textContent='100%'}
     timers.push(setTimeout(()=>{fin=outcome();render()},T));return}
   if(s.type==='message'){
-    c.innerHTML='<div class="result"><img class="msg-logo" src="logos/dropi.webp" alt="Dropi"><p class="fq">'+esc(s.q)+'</p><p class="msg">'+esc(s.h)+'</p><button class="fbtn" id="cont">Continuar</button></div>';
-    $('cont').addEventListener('click',advance);return}
+    c.innerHTML='<div class="result"><img class="msg-logo" src="logos/dropi.webp" alt="Dropi"><p class="fq">'+esc(s.q)+'</p><p class="msg">'+esc(s.h)+'</p><button class="fbtn" id="cont">Continuar</button></div><div class="fnav">'+backBtn+'</div>';
+    $('cont').addEventListener('click',advance);wire();return}
   if(s.type==='slider'){const v=A.ventas!==undefined?A.ventas:s.def;
     c.innerHTML=counter()+'<p class="fq">'+esc(s.q)+'</p><p class="fh">'+esc(s.h)+'</p><div class="sld"><div class="sval"><span><b id="sv">'+v.toLocaleString('es-CO')+'</b><small>'+esc(s.unit)+'</small></span></div><input type="range" id="sr" min="'+s.min+'" max="'+s.max+'" step="1" value="'+v+'" aria-label="Ventas diarias"><div class="ends"><span>0</span><span>1.000</span></div></div><button class="fbtn" id="nx" style="margin-top:22px">Siguiente</button><div class="fnav">'+backBtn+'</div>';
     $('sr').addEventListener('input',e=>{$('sv').textContent=(+e.target.value).toLocaleString('es-CO')});
@@ -223,7 +223,7 @@ function start(){clearT();hist=[];AG=null;cur=nextScr(-1,{ventas:1});render();
   if(!iconosPrecargados){iconosPrecargados=true;(window.requestIdleCallback||(f=>setTimeout(f,200)))(precargarIconos)}}
 function advance(){hist.push(cur);const n=nextScr(cur);if(n<0){fin=outcome()}else cur=n;render()}
 function pick(k,v){setAns(k,v);const s=STEPS.find(x=>x.k===k);if(s.end&&s.end.includes(v)){hist.push(cur);fin=outcome();render();return}advance()}
-function back(){clearT();if(!hist.length)return;cur=hist.pop();fin=null;AG=null;render()}
+function back(){clearT();fin=null;AG=null;cur=hist.length?hist.pop():-1;render()}
 function send(){const n=$('fn').value.trim(),iso=$('cc').value,p=iso?paisBy(iso):null,e=$('em')?$('em').value.trim():'';let t=$('ph').value.replace(/\D/g,'');let m='';
   if(p){if(t.startsWith(p[0])&&t.length>(p[5]||10))t=t.slice(p[0].length);t=t.replace(/^0+/,'')}
   if(!n)m='Escribe tu nombre para continuar.';else if(!p)m='Elige el país de tu celular para continuar.';
