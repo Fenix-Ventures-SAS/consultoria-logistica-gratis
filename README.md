@@ -2,11 +2,15 @@
 
 Formulario de calificación de Fénix Ventures, la vertical logística de Dropi.
 
-**Estado: versión de prueba.** No guarda datos y los horarios de la agenda son de ejemplo. La página muestra un aviso que lo dice.
+**Estado: en producción (12-nov-2026).** Cada lead que deja sus datos queda en GHL y agenda con horarios reales.
+
+- `functions/api/[[ruta]].js` es el portero, la única parte que habla con GHL. Corre en Cloudflare y la clave vive allá (`GHL2_TOKEN`), nunca en este repositorio.
+  - `/api/lead`: crea o actualiza el contacto por WhatsApp sin pisar sus datos, le suma la etiqueta del subdominio (`formevon`, `formpmeta`…), deja la oportunidad de Setter 2.0 en "Requiere atención humana" con todas las respuestas en una nota y devuelve los horarios.
+  - `/api/agendar`: vuelve a verificar el horario en GHL, crea la cita (consultor por ventas diarias, como Sofía), guarda `hora_local_cita` y pasa la oportunidad a "Agendado 📆".
 
 - `index.html` (estructura y estilos) y `app.js` (preguntas, lógica y agenda) son todo el código, sin librerías externas.
 - Pensada para cargar rápido: la portada baja unos 63 KB en total, con letras recortadas en WOFF2 e imágenes en WebP. Los íconos de las preguntas se precargan en segundo plano.
-- No hay claves en este repositorio. La conexión con GHL y con la agenda va por un servicio aparte, que guarda las claves escondidas.
+- No hay claves en este repositorio.
 
 ## Créditos
 

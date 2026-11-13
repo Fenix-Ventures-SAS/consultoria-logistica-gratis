@@ -1,17 +1,8 @@
 /* Formulario de Fénix Ventures: Consultoría Logística Gratis. */
-const CONFIG={modoPrueba:true,api:''};
 // Si alguien mete la página dentro de otra (clickjacking), se sale del marco
 if(window.top!==window.self){try{window.top.location=window.location.href}catch(e){document.documentElement.style.display='none'}}
-// Origen del lead: UTM, fbclid e ids de Meta del enlace (se guardan con la respuesta cuando el formulario se conecte)
-// Fuente del lead según el subdominio: form{fuente}.fenixventures.co (p. ej. formpmeta.fenixventures.co).
-// Para probar sin dominio se acepta ?fuente=pmeta. Si no coincide con ninguna, queda como "directo".
-const FUENTES={pmeta:'Pauta Meta',ptiktok:'Pauta TikTok',pgoogle:'Pauta Google',ig:'Orgánico Instagram',tkt:'Orgánico TikTok',lkd:'LinkedIn',dropi:'Referidos Dropi',ref:'Referidos',evon:'Eventos online',evfis:'Eventos físicos'};
-const FUENTE=(()=>{const m=location.hostname.match(/^form([a-z]+)\./);const f=(m?m[1]:new URLSearchParams(location.search).get('fuente')||'').toLowerCase();return Object.hasOwn(FUENTES,f)?f:'directo'})();
-// Mientras la página esté en modo prueba (aún no guarda datos), los subdominios reales llevan al formulario
-// de dForms, que sí guarda las respuestas, con la fuente marcada. Las direcciones de prueba muestran esta página.
-if(CONFIG.modoPrueba&&/^form[a-z]*\.fenixventures\.co$/.test(location.hostname)){
-  location.replace('https://app.dforms.ai/989v5e/f/consultoria-logistica-gratis?utm_source='+FUENTE+'&utm_medium=formulario-web&utm_campaign='+FUENTE);
-}
+// Origen del clic: UTM, fbclid e ids de Meta del enlace. Va en la nota del contacto en GHL.
+// La fuente (etiqueta formevon, formpmeta…) la pone el servidor según el subdominio por el que entró.
 const ORIGEN=(()=>{const q=new URLSearchParams(location.search),o={};['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid','campaign_id','adset_id','ad_id'].forEach(k=>{const v=q.get(k);if(v)o[k]=v.slice(0,300)});return o})();
 const GT0={f:'ventas',op:'gt',v:0};
 const PLATS=['dropi','effi','hoko','mastershop','otra'],CANAL_OK=['pagina','whatsapp_redes','pagina_whatsapp'],PAUTA_OK=['meta','tiktok','google'];
@@ -57,11 +48,7 @@ cal:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" 
 pen:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>'};
 const KIND={ok:['#f1f7f3','#0b6b3a'],warn:['#fbf3e1','#8d6208'],no:['#eef2ef','#5f6e64']};
 
-/* Agenda con la lógica de Sofía (flujos KAd4A y knRiI): consultores por tier, el horario más cercano primero, empate por prioridad, ventana de 36 h sin domingos ni festivos, mínimo 90 min, hora del país por indicativo. Disponibilidad simulada. */
-const CLOSERS={ricardo:'Ricardo López',daniel:'Daniel Plata',felipe:'Felipe Gómez',sonia:'Sonia Gómez',yucelis:'Yucelis Cárdenas'};
-const ORDEN={b1:['ricardo','daniel','felipe','sonia'],b2:['sonia','yucelis','ricardo'],b3:['sonia','yucelis']};
-const FESTIVOS=['2026-11-16','2026-12-08','2026-12-25','2027-01-01','2027-01-11','2027-03-22'];
-const GRID_WD=['08:30','09:30','10:30','11:30','14:00','15:00','16:00'],GRID_SAT=['09:30','10:30','11:30'];
+/* Agenda: los horarios reales los entrega el servidor (functions/api) con las reglas de Sofía. Aquí solo se muestran en la hora del país del celular. */
 const PAISES=[['593','America/Guayaquil','Ecuador','EC','🇪🇨',9,'99 123 4567'],['595','America/Asuncion','Paraguay','PY','🇵🇾',9,'981 123 456'],['502','America/Guatemala','Guatemala','GT','🇬🇹',8,'5123 4567'],['507','America/Panama','Panamá','PA','🇵🇦',8,'6123 4567'],['56','America/Santiago','Chile','CL','🇨🇱',9,'9 1234 5678'],['52','America/Mexico_City','México','MX','🇲🇽',10,'55 1234 5678'],['54','America/Argentina/Buenos_Aires','Argentina','AR','🇦🇷',10,'11 2345 6789'],['57','America/Bogota','Colombia','CO','🇨🇴',10,'300 123 4567']];
 const PAIS_ORDEN=['CO','MX','CL','EC','GT','PA','PY','AR'];
 const DIAL='AF93 AX358 AL355 DZ213 AS1684 AD376 AO244 AI1264 AG1268 AR54 AM374 AW297 AU61 AT43 AZ994 BS1242 BH973 BD880 BB1246 BY375 BE32 BZ501 BJ229 BM1441 BT975 BO591 BA387 BW267 BR55 IO246 VG1284 BN673 BG359 BF226 BI257 KH855 CM237 CA1 CV238 BQ599 KY1345 CF236 TD235 CL56 CN86 CX61 CC61 CO57 KM269 CG242 CD243 CK682 CR506 CI225 HR385 CU53 CW599 CY357 CZ420 DK45 DJ253 DM1767 DO1 EC593 EG20 SV503 GQ240 ER291 EE372 SZ268 ET251 FK500 FO298 FJ679 FI358 FR33 GF594 PF689 GA241 GM220 GE995 DE49 GH233 GI350 GR30 GL299 GD1473 GP590 GU1671 GT502 GG44 GN224 GW245 GY592 HT509 HN504 HK852 HU36 IS354 IN91 ID62 IR98 IQ964 IE353 IM44 IL972 IT39 JM1876 JP81 JE44 JO962 KZ7 KE254 KI686 XK383 KW965 KG996 LA856 LV371 LB961 LS266 LR231 LY218 LI423 LT370 LU352 MO853 MG261 MW265 MY60 MV960 ML223 MT356 MH692 MQ596 MR222 MU230 YT262 MX52 FM691 MD373 MC377 MN976 ME382 MS1664 MA212 MZ258 MM95 NA264 NR674 NP977 NL31 NC687 NZ64 NI505 NE227 NG234 NU683 NF672 KP850 MK389 MP1670 NO47 OM968 PK92 PW680 PS970 PA507 PG675 PY595 PE51 PH63 PL48 PT351 PR1 QA974 RE262 RO40 RU7 RW250 BL590 SH290 KN1869 LC1758 MF590 PM508 VC1784 WS685 SM378 ST239 SA966 SN221 RS381 SC248 SL232 SG65 SX1721 SK421 SI386 SB677 SO252 ZA27 KR82 SS211 ES34 LK94 SD249 SR597 SJ47 SE46 CH41 SY963 TW886 TJ992 TZ255 TH66 TL670 TG228 TK690 TO676 TT1868 TN216 TR90 TM993 TC1649 TV688 VI1340 UG256 UA380 AE971 GB44 US1 UY598 UZ998 VU678 VA39 VE58 VN84 WF681 EH212 YE967 ZM260 ZW263';
@@ -74,15 +61,6 @@ const MUNDO=DIAL.split(' ').map(x=>[x.slice(0,2),x.slice(2)]).map(([iso,cod])=>[
 // Países donde opera Fénix: zona horaria y dígitos exactos. El resto: zona horaria de su país (según el indicativo) y una revisión general de largo.
 const paisBy=iso=>{const f=PAISES.find(p=>p[3]===iso);if(f)return f;const w=MUNDO.find(m=>m[0]===iso);return w?[w[1],TZ_PAIS[w[0]]||'America/Bogota',w[2],w[0],BANDERA(w[0]),null,'Número de celular']:null};
 const DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'],MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-const bogDay=ms=>new Date(ms-5*3600e3).toISOString().slice(0,10);
-const dayMs=d=>Date.parse(d+'T12:00:00-05:00');
-const noLab=d=>FESTIVOS.includes(d)||new Date(dayMs(d)).getUTCDay()===0;
-function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return (h>>>0)%100}
-const busy=(cl,ms)=>hash(cl+ms)<42;
-function windowMs(){const now=Date.now();let lim=now+36*3600e3;let cur=dayMs(bogDay(now));while(cur<=lim+12*3600e3){const d=bogDay(cur);if(Date.parse(d+'T00:00:00-05:00')>lim)break;if(noLab(d))lim+=24*3600e3;cur+=24*3600e3}return [now+90*60e3,lim]}
-function gridDays(n){const out=[];let ms=dayMs(bogDay(Date.now()));for(let i=0;i<n;i++){const d=bogDay(ms);if(!noLab(d))out.push(d);ms+=24*3600e3}return out}
-function slotsOf(d){const wd=new Date(dayMs(d)).getUTCDay();return (wd===6?GRID_SAT:GRID_WD).map(t=>Date.parse(d+'T'+t+':00-05:00'))}
-function freeSlots(tier){const [a,b]=windowMs();const out=[];gridDays(6).forEach(d=>slotsOf(d).forEach(ms=>{if(ms<a||ms>b)return;const cl=ORDEN[tier].find(c=>!busy(c,ms));if(cl)out.push({ms,cl})}));return out.sort((x,y)=>x.ms-y.ms)}
 function country(){if(C.pais&&paisBy(C.pais))return paisBy(C.pais);const t=(C.tel||'').replace(/\D/g,'');return PAISES.find(p=>t.startsWith(p[0]))||PAISES[7]}
 function parts(ms,tz){const o={};new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(ms)).forEach(p=>o[p.type]=p.value);return o}
 function fmt(ms,long){const tz=country()[1];const p=parts(ms,tz);const tp=parts(Date.now(),tz);const d=p.year+'-'+p.month+'-'+p.day;const t=tp.year+'-'+tp.month+'-'+tp.day;
@@ -109,8 +87,11 @@ function parseReq(txt){const s=txt.toLowerCase().normalize('NFD').replace(/[̀-�
   if(hh===null){hh=8;mm=30}
   return localToMs(day,hh,mm)}
 
-let A={},C={},hist=[],cur=-1,fin=null,timers=[],AG=null;
-const CARGA_MS=4500,BUSQUEDA_MS=1800;
+let A={},C={},hist=[],cur=-1,fin=null,timers=[],AG=null,LEAD=null,TOKEN=null;
+const CARGA_MS=4500;
+// Llamada al servidor; si se cae la red o el servidor, se reintenta una vez
+async function api(ruta,datos){const una=async()=>{try{const r=await fetch('/api/'+ruta,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(datos),keepalive:true});const j=await r.json().catch(()=>({}));return {...j,status:r.status}}catch(e){return {ok:false,status:0}}};
+  const r=await una();return r.status===0||r.status>=500?una():r}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -146,24 +127,34 @@ function counter(){const ans=optim();const qs=SCREENS.map((sc,i)=>i).filter(i=>s
 const nameOf=()=>(C.nombre||'').split(' ')[0];
 
 function agendaHTML(){const o=OUT[fin];const nm=nameOf();const pc0=country();const pais='hora de '+pc0[2]+(ZONA_CIUDAD[pc0[3]]?' ('+ZONA_CIUDAD[pc0[3]]+')':'');
-  if(AG.booked){const b=AG.booked;return '<div class="result"><div class="badge-ico" style="background:#f1f7f3;color:#0b6b3a">'+ICO.ok+'</div><p class="fq">¡Listo, '+esc(nm||'listo')+'!</p><p class="msg">Quedó agendada tu '+esc(o.dur)+' para el <b>'+esc(fmt(b.ms,true))+'</b>, '+pais+'.</p><ul class="tips"><li>Te llega la invitación por WhatsApp'+(C.mail?' y al correo':'')+'.</li><li>Conéctate desde el computador, con cámara y buena señal.</li>'+(A.socios==='socios'?'<li>Conéctate con tus socios: deben estar todos los que deciden.</li>':'')+'</ul><button class="flink" id="again">Volver a empezar</button></div>'}
+  if(AG.sinAgenda)return '<div class="result"><div class="badge-ico" style="background:#f1f7f3;color:#0b6b3a">'+ICO.ok+'</div><p class="fq">¡'+esc(nm||'Listo')+', tu tienda califica!</p><p class="msg">Ya tenemos tus datos. Un consultor te escribe por WhatsApp para agendar tu '+esc(o.dur)+'.</p><button class="flink" id="again">Volver a empezar</button></div>';
+  if(AG.booked){const b=AG.booked;return '<div class="result"><div class="badge-ico" style="background:#f1f7f3;color:#0b6b3a">'+ICO.ok+'</div><p class="fq">¡Listo, '+esc(nm||'listo')+'!</p><p class="msg">'+(b.ya?'Ya tienes agendada tu '+esc(o.dur)+' para el':'Quedó agendada tu '+esc(o.dur)+' para el')+' <b>'+esc(fmt(b.ms,true))+'</b>, '+pais+'.</p><ul class="tips"><li>Te llega la invitación por WhatsApp'+(C.mail?' y al correo':'')+'.</li><li>Conéctate desde el computador, con cámara y buena señal.</li>'+(A.socios==='socios'?'<li>Conéctate con tus socios: deben estar todos los que deciden.</li>':'')+'</ul><button class="flink" id="again">Volver a empezar</button></div>'}
   const title='<p class="fcount">Agenda</p><p class="fq">'+(fin==='b3'?'¡Listo, '+esc(nm)+'!':'¡'+esc(nm)+', tu tienda califica!')+'</p>';
-  if(AG.mode==='calendly'){const days=gridDays(4).slice(0,2);const cl=AG.cal;
-    return title+'<p class="fh">No encontramos ese espacio. Agenda directo con el consultor que tiene más disponibilidad en los próximos dos días.</p><div class="calw"><div class="calh">'+ICO.cal+'<div><b>'+esc(CLOSERS[cl])+'</b><small>Calendly · '+(fin==='b3'?'15 min':'30 min')+' · próximos 2 días</small></div></div><div class="calg">'+days.map(d=>{const sl=slotsOf(d).filter(ms=>ms>Date.now()+90*60e3&&!busy(cl,ms));return '<div class="cald"><p>'+esc(fmt(dayMs(d)).dia)+'</p>'+(sl.length?sl.map(ms=>'<button class="calt" data-ms="'+ms+'" data-cl="'+cl+'">'+fmt(ms).hora+'</button>').join(''):'<small>Sin espacios</small>')+'</div>'}).join('')+'</div></div>'}
+  const aviso=(AG.note?'<p class="llm">'+AG.note+'</p>':'')+(AG.busy?'<p class="intento">Agendando…</p>':'');
+  if(AG.mode==='respaldo'){const R=AG.respaldo;
+    return title+'<p class="fh">'+(AG.attempts?'No encontramos ese espacio. ':'')+'Agenda directo con el consultor que tiene más disponibilidad en los próximos dos días. Horarios en '+pais+'.</p>'+aviso+'<div class="calw"><div class="calh">'+ICO.cal+'<div><b>'+esc(R.nombre)+'</b><small>Próximos 2 días</small></div></div><div class="calg">'+R.dias.map(d=>'<div class="cald"><p>'+esc(fmt(Date.parse(d.d+'T12:00:00-05:00')).dia)+'</p>'+(d.slots.length?d.slots.map(ms=>'<button class="calt" data-ms="'+ms+'" data-cl="'+R.cl+'">'+fmt(ms).hora+'</button>').join(''):'<small>Sin espacios</small>')+'</div>').join('')+'</div></div>'}
+  if(!AG.all.length)return title+aviso+'<p class="msg">En este momento no hay horarios libres en la agenda. Ya tenemos tus datos: un consultor te escribe por WhatsApp para agendar tu '+esc(o.dur)+'.</p><button class="flink" id="again">Volver a empezar</button>';
   const list=AG.list.map(x=>{const f=fmt(x.ms);return '<button class="slot" data-ms="'+x.ms+'" data-cl="'+x.cl+'"><span>'+esc(f.dia)+'</span><b>'+f.hora+'</b></button>'}).join('');
   const other='<button class="slot other'+(AG.mode==='other'?' on':'')+'" id="oth"><span>'+ICO.pen+'Otro día u hora</span><b>Escríbelo</b></button>'+
     (AG.mode==='other'?'<div class="othbox"><input class="finput" id="othtxt" placeholder="Ej.: mañana a las 3 pm, el lunes en la mañana" value="'+esc(AG.lastTxt||'')+'"><button class="fbtn" id="othgo">Buscar</button><p class="ferr" id="otherr"></p></div>':'');
-  return title+'<p class="fh">Elige el horario de tu '+esc(o.dur)+'. Horarios en '+pais+'.</p>'+(AG.note?'<p class="llm">'+AG.note+'</p>':'')+'<div class="slots">'+list+other+'</div><p class="intento">'+(AG.attempts?'Intento '+AG.attempts+' de 2 con otro horario':'')+'</p>'}
+  return title+'<p class="fh">Elige el horario de tu '+esc(o.dur)+'. Horarios en '+pais+'.</p>'+aviso+'<div class="slots">'+list+other+'</div><p class="intento">'+(AG.attempts?'Intento '+AG.attempts+' de 2 con otro horario':'')+'</p>'}
 
-function book(ms,cl,via){AG.booked={ms,cl,via};render()}
-function startAgenda(tier){const all=freeSlots(tier||fin);AG={all,list:all.slice(0,5),mode:'list',attempts:0,note:'',booked:null}}
+// La cita se crea en GHL; si el horario se ocupó en el camino, llegan horarios nuevos
+async function book(ms,cl){if(AG.busy)return;AG.busy=true;render();
+  const r=await api('agendar',{token:TOKEN,ms,cl});if(!AG)return;AG.busy=false;
+  if(r.ok){AG.booked={ms:r.ms,ya:!!r.ya};render();return}
+  if(r.status===409&&r.agenda){startAgenda(r.agenda);AG.note='Ese horario se acaba de ocupar. Elige otro.';render();return}
+  AG.note='No pudimos agendar en este momento. Ya tenemos tus datos: un consultor te escribe por WhatsApp para confirmar tu cita.';render()}
+// Las 5 primeras opciones quedan separadas al menos una hora, como las ofrece Sofía
+function espaciar(all){const out=[];all.forEach(x=>{if(out.length<5&&(!out.length||x.ms-out[out.length-1].ms>=3600e3))out.push(x)});return out}
+function startAgenda(ag){AG=ag?{all:ag.opciones||[],respaldo:ag.respaldo,mode:'list',attempts:0,note:'',booked:null}:{sinAgenda:true};if(!AG.all)return;AG.list=espaciar(AG.all);if(!AG.all.length&&AG.respaldo)AG.mode='respaldo'}
 function searchOther(){const txt=$('othtxt').value.trim();if(!txt){$('otherr').textContent='Escribe el día o la hora que prefieres.';return}
   const ms=parseReq(txt);AG.lastTxt=txt;
   if(ms===null){$('otherr').textContent='No entendí el día o la hora. Prueba así: «mañana a las 3 pm».';return}
   const exact=AG.all.find(x=>x.ms===ms);const said='Entendimos: <b>'+esc(fmt(ms,true))+'</b>.';
   if(exact){AG.note=said;book(exact.ms,exact.cl);return}
   AG.attempts++;
-  if(AG.attempts>=2){const days=gridDays(4).slice(0,2);let bestC=null,bestN=-1;ORDEN[fin].forEach(c=>{const n=days.reduce((a,d)=>a+slotsOf(d).filter(m=>m>Date.now()+90*60e3&&!busy(c,m)).length,0);if(n>bestN){bestN=n;bestC=c}});AG.cal=bestC;AG.mode='calendly';AG.note='';render();return}
+  if(AG.attempts>=2&&AG.respaldo){AG.mode='respaldo';AG.note='';render();return}
   const near=AG.all.slice().sort((a,b)=>Math.abs(a.ms-ms)-Math.abs(b.ms-ms)).slice(0,5).sort((a,b)=>a.ms-b.ms);
   AG.list=near;AG.mode='list';AG.lastTxt='';AG.note=said+' Ese espacio no está libre; estas son las 5 opciones más cercanas.';render()}
 
@@ -171,8 +162,8 @@ function render(){const c=$('card');c.classList.remove('flood');
   // Portada en verde oscuro; de la primera pregunta en adelante, fondo beige muy claro
   $('fcard').classList.toggle('osc',cur<0&&!fin);
   if(fin){const o=OUT[fin];
-    if(['b1','b2','b3'].includes(fin)){if(!AG)startAgenda();c.innerHTML=agendaHTML();
-      c.querySelectorAll('.slot[data-ms],.calt').forEach(b=>b.addEventListener('click',()=>book(+b.dataset.ms,b.dataset.cl,b.classList.contains('calt'))));
+    if(['b1','b2','b3'].includes(fin)){if(!AG)startAgenda(null);c.innerHTML=agendaHTML();
+      c.querySelectorAll('.slot[data-ms],.calt').forEach(b=>b.addEventListener('click',()=>book(+b.dataset.ms,b.dataset.cl)));
       if($('oth'))$('oth').addEventListener('click',()=>{AG.mode=AG.mode==='other'?'list':'other';render();if($('othtxt'))$('othtxt').focus()});
       if($('othgo')){$('othgo').addEventListener('click',searchOther);$('othtxt').addEventListener('keydown',e=>{if(e.key==='Enter')searchOther()})}
       if($('again'))$('again').addEventListener('click',reset);return}
@@ -195,11 +186,12 @@ function render(){const c=$('card');c.classList.remove('flood');
   if(s.type==='reveal'){c.classList.add('flood');const nm=nameOf();const ini=(C.nombre||'?').split(' ').filter(Boolean).map(x=>x[0]).slice(0,2).join('').toUpperCase();
     c.innerHTML='<div class="result vs"><div class="vsrow"><div class="vsm"><span class="vsc ini">'+esc(ini)+'</span><small>'+esc(nm||'Tú')+'</small></div><div class="vsp" id="vsp">0%</div><div class="vsm"><span class="vsc em"><img src="fenix-emblema.webp" alt=""></span><small>Perfil Fénix</small></div></div><p class="vss">Comparando con tiendas que ya escalaron</p><div class="vsbar"><i id="vsb"></i></div><p class="fq">Analizando tu operación</p><p class="fh">'+(nm?esc(nm)+', estamos':'Estamos')+' revisando si pasaste los últimos filtros</p></div>';
     const T=RM?0:CARGA_MS,t0=performance.now();
-    // Mientras corre la carga se buscan los horarios del consultor que le toca; al terminar ya están listos
-    const pre=outcome();if(['b1','b2','b3'].includes(pre)&&!AG)timers.push(setTimeout(()=>startAgenda(pre),RM?0:BUSQUEDA_MS));
+    // Mientras corre la carga, el servidor crea el contacto en GHL y busca los horarios del consultor que le toca
+    const pendiente=LEAD;
     const tick=()=>{if(!$('vsp'))return;const k=Math.min(1,(performance.now()-t0)/(T||1));$('vsp').textContent=Math.round(k*100)+'%';$('vsb').style.width=Math.round(k*100)+'%';if(k<1&&!fin)requestAnimationFrame(tick)};
     if(T)requestAnimationFrame(tick);else{$('vsp').textContent='100%'}
-    timers.push(setTimeout(()=>{fin=outcome();render()},T));return}
+    timers.push(setTimeout(async()=>{const r=pendiente?await pendiente:null;if(LEAD!==pendiente||fin||!$('vsp'))return;
+      TOKEN=r&&r.ok?r.token:null;startAgenda(r&&r.ok&&r.agenda?r.agenda:null);fin=outcome();render()},T));return}
   if(s.type==='message'){
     c.innerHTML='<div class="result"><img class="msg-logo" src="logos/dropi.webp" alt="Dropi"><p class="fq">'+esc(s.q)+'</p><p class="msg">'+esc(s.h)+'</p><button class="fbtn" id="cont">Continuar</button></div><div class="fnav">'+backBtn+'</div>';
     $('cont').addEventListener('click',advance);wire();return}
@@ -247,8 +239,10 @@ function send(){const n=$('fn').value.trim(),iso=$('cc').value,p=iso?paisBy(iso)
   else if(!p[5]&&(t.length<6||t.length>14))m='Revisa el número: parece incompleto.';
   else if(e&&!/^\S+@\S+\.\S+$/.test(e))m='Revisa el correo o déjalo vacío.';
   if(m){$('er').textContent=m;return}
-  C={nombre:n,pais:iso,num:t,tel:'+'+p[0]+' '+t,mail:e};advance()}
-function reset(){clearT();A={};C={};hist=[];cur=-1;fin=null;AG=null;render()}
+  C={nombre:n,pais:iso,num:t,tel:'+'+p[0]+' '+t,mail:e};AG=null;TOKEN=null;
+  LEAD=api('lead',{respuestas:A,contacto:{nombre:n,tel:p[0]+t,mail:e,tz:p[1],pais:p[2]},origen:Object.entries(ORIGEN).map(([k,v])=>k+'='+v).join(' · ')});
+  advance()}
+function reset(){clearT();A={};C={};hist=[];cur=-1;fin=null;AG=null;LEAD=null;TOKEN=null;render()}
 
 function sizeEmb(){const fw=document.querySelector('.fword'),fc=document.querySelector('.fcard');
   if(fw&&fc){const w=fw.getBoundingClientRect().width;if(w>0)fc.style.setProperty('--emb',Math.round(w*335/645)+'px')}}
