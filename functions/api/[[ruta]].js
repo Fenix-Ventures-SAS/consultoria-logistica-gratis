@@ -146,7 +146,7 @@ function armarHorarios(tier, porCloser) {
   const dias = [...new Set(Object.values(porCloser).flat().map(bogDia))].sort().slice(0, 2);
   let mejor = null, n = -1;
   ORDEN[tier].forEach(k => { const c = (porCloser[k] || []).filter(t => dias.includes(bogDia(t))).length; if (c > n) { n = c; mejor = k; } });
-  const respaldo = mejor && n > 0 ? { cl: mejor, nombre: CAL[mejor].nombre, dias: dias.map(d => ({ d, slots: porCloser[mejor].filter(t => bogDia(t) === d) })) } : null;
+  const respaldo = mejor && n > 0 ? { cl: mejor, dias: dias.map(d => ({ d, slots: porCloser[mejor].filter(t => bogDia(t) === d) })) } : null;
   return { opciones, respaldo };
 }
 
@@ -174,12 +174,14 @@ function leerRespuestas(a) {
   // Cuál chatbot: solo cuenta si dijo que usa uno
   if (r.chatbot !== 'chatbot') delete r.chatbot_cual;
   r.chatbot_otro = r.chatbot_cual === 'otro' ? limpio(a.chatbot_otro, 60) : '';
-  // Opcionales para la reunión: con socio, su nombre y correo; si decide solo, un correo de alguien más a invitar.
+  // Si su socio confirma los pedidos, el formulario no pregunta por socios: se da por hecho que los tiene (Daniel, 13-nov)
+  if (!r.socios && r.confirma === 'socio') { r.socios = 'socios'; r.sociosDeducido = true; }
+  // Opcionales para la reunión (van en la pantalla de datos): con socio, su nombre y correo; sin socio, un correo de alguien más.
   // Un correo mal escrito se descarta en silencio: nunca hace perder al lead.
   const correo = v => { const m = limpio(v, 120).toLowerCase(); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m) ? m : ''; };
   r.socio_nombre = r.socios === 'socios' ? limpio(a.socio_nombre, 80) : '';
   r.socio_correo = r.socios === 'socios' ? correo(a.socio_correo) : '';
-  r.invitado_correo = r.socios === 'solo' ? correo(a.invitado_correo) : '';
+  r.invitado_correo = r.socios === 'socios' ? '' : correo(a.invitado_correo);
   // Mismo filtro del formulario: si no lo pasa, no debió llegar aquí
   const PLATS = ['dropi', 'effi', 'hoko', 'mastershop', 'otra'];
   if (!(r.plataforma || []).some(x => PLATS.includes(x))) return null;
@@ -242,7 +244,7 @@ function notaRespuestas(r, c, etiqueta, origen, tier, parcial) {
   if (r.chatbot_cual) filas.push('Chatbot que usa: ' + OPC.chatbot_cual[r.chatbot_cual] + (r.chatbot_otro ? ' (' + r.chatbot_otro + ')' : ''));
   if (r.confirma) filas.push('Confirma los pedidos: ' + OPC.confirma[r.confirma]);
   if (r.problema) filas.push('Principales problemas: ' + lista('problema', r.problema));
-  if (r.socios) filas.push('Decisiones: ' + OPC.socios[r.socios]);
+  if (r.socios) filas.push('Decisiones: ' + OPC.socios[r.socios] + (r.sociosDeducido ? ' (no se le preguntó: su socio confirma los pedidos)' : ''));
   if (r.socio_nombre || r.socio_correo) filas.push('Socio(a) para la reunión: ' + [r.socio_nombre, r.socio_correo].filter(Boolean).join(' · '));
   if (r.invitado_correo) filas.push('Invitar también a la reunión: ' + r.invitado_correo);
   if (origen) filas.push('', 'Origen del clic: ' + origen);

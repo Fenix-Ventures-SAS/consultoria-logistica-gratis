@@ -57,7 +57,9 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .fhead .partner img{height:27px;width:auto}
 .fprog{height:3px;background:var(--f-chip)}
 .fprog i{display:block;height:100%;width:0;background:var(--f-gold);transition:width .3s ease}
-.fbody{flex:1;display:flex;flex-direction:column;padding:26px 24px 22px}
+.fbody{flex:1;min-height:0;display:flex;flex-direction:column;padding:26px 24px 22px}
+/* Nada de la pantalla se encoge para caber (si no cabe, se compacta todo con ajustar(), así nada queda cortado sin verse) */
+.fbody>*{flex-shrink:0}
 .fcount{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--f-mut);margin:0 0 10px;font-variant-numeric:tabular-nums}
 .fq{font-family:var(--display);font-weight:700;font-size:21px;line-height:1.28;color:var(--f-ink);margin:0 0 8px;text-wrap:balance}
 .fh{font-size:13.5px;color:var(--f-mut);margin:0 0 16px}
@@ -71,6 +73,8 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .finput{display:block;width:100%;font:inherit;font-size:14.5px;color:var(--f-tx);background:var(--f-bg);border:1px solid var(--f-line);border-radius:10px;padding:11px 12px}
 .finput::placeholder{color:#9aa79f}
 .ferr{color:#a12d25;font-size:13px;min-height:20px;margin:8px 0 6px}
+.flabel .opc{font-weight:400;color:var(--f-mut)}
+.fdos{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:8px}
 .cover{flex:1;display:flex;flex-direction:column;text-align:left}
 .cover .emb{flex:1;display:grid;place-items:center;min-height:calc(var(--emb,86px) + 24px);position:relative;overflow:hidden}
 .cover .emb img{width:var(--emb,86px);height:auto}
@@ -176,12 +180,62 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .cald small{font-size:12px;color:var(--f-mut)}
 .vsc.ini{font-family:var(--display);font-size:20px;color:#0b6b3a}
 @media (prefers-reduced-motion: reduce){.fprog i,.fc{transition:none}}
+/* ---- Compactado para pantallas bajas (lo activa ajustar() en app.js solo si la pantalla no cabe) ---- */
+.k1 .fhead{padding:12px 16px}
+.k1 .fbody{padding:18px 20px 12px}
+.k1 .fcount{margin-bottom:6px}
+.k1 .fq{font-size:19px;margin-bottom:6px}
+.k1 .fq.sm{font-size:16px}
+.k1 .fh{font-size:13px;margin-bottom:10px}
+.k1 .fcards{gap:6px;margin-top:6px}
+.k1 .fc{min-height:64px;padding:8px;gap:5px;font-size:13px}
+.k1 .fc .ic{width:32px;height:32px}
+.k1 .ic.im img{width:28px;height:28px}
+.k1 .ic.im img[src*="/3d/"]{width:32px;height:32px}
+.k1 .ic.im.two img{width:26px;height:26px}
+.k1 .grp{margin-bottom:10px}
+.k1 .fnav{padding-top:10px}
+.k1 .fbtn{padding:11px 16px}
+.k1 .ferr{min-height:16px;margin:4px 0}
+.k1 .flabel{margin:8px 0 4px}
+.k1 .finput{padding:9px 11px}
+.k1 .sval span{font-size:34px;padding:8px 18px}
+.k1 .sld input[type=range]{margin:14px 0 4px}
+.k1 .slots{gap:6px}
+.k1 .slot{padding:9px 12px}
+.k1 .calh{padding:8px 12px}
+.k1 .calg{gap:8px;padding:10px}
+.k1 .calt{padding:6px;margin:0 0 4px}
+.k1 .result p.msg{margin-bottom:14px}
+.k1 .badge-ico{margin-bottom:10px}
+.k1 .cover .fq{font-size:22px}
+.k1 .trust{margin-top:12px}
+.k2 .fhead{padding:9px 14px}
+.k2 .fbody{padding:14px 16px 10px}
+.k2 .fq{font-size:17.5px;line-height:1.24}
+.k2 .fh{font-size:12.5px;margin-bottom:8px}
+.k2 .fcards:not(.c3) .fc{flex-direction:row;justify-content:flex-start;text-align:left;min-height:46px;padding:6px 10px;gap:8px}
+.k2 .fcards:not(.c3) .fc .ic{flex:none;width:28px;height:28px}
+.k2 .fcards:not(.c3) .ic.im img{width:24px;height:24px}
+.k2 .fcards:not(.c3) .ic.im img[src*="/3d/"]{width:28px;height:28px}
+.k2 .fcards:not(.c3) .ic.im.two img{width:22px;height:22px}
+.k2 .fcards.c3 .fc{min-height:52px;padding:5px;gap:3px;font-size:12px}
+.k2 .fnav{padding-top:6px}
+.k2 .fbtn{padding:10px 14px}
+.k2 .flabel{margin:6px 0 3px;font-size:12px}
+.k2 .finput{padding:8px 10px}
+.k2 .slot{padding:7px 11px;font-size:13.5px}
+.k2 .calt{padding:5px;font-size:12.5px}
+.k2 .cover .fq{font-size:20px}
+
 /* Página real: el formulario ocupa toda la pantalla en celular y va centrado en computador */
 html,body{height:100%}
 body{margin:0;background:#e9ece8;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;min-height:100dvh;padding:24px 16px;box-sizing:border-box}
 main{display:flex;justify-content:center;width:100%}
-.fcard{min-height:min(780px,calc(100dvh - 48px))}
-@media (max-width:540px){body{padding:0;gap:0;justify-content:flex-start;align-items:stretch;background:var(--f-page)}main{flex:1;display:flex}.fcard{max-width:none;width:100%;min-height:0;flex:1;border:0;border-radius:0;box-shadow:none}}
+/* La tarjeta mide lo visible de la pantalla (svh: con las barras del navegador a la vista) y nunca obliga a bajar:
+   si una pantalla no cabe, app.js la compacta (ver ajustar) */
+.fcard{min-height:0;height:min(780px,calc(100vh - 48px));height:min(780px,calc(100svh - 48px))}
+@media (max-width:540px){body{padding:0;gap:0;justify-content:flex-start;align-items:stretch;background:var(--f-page);min-height:0;height:100vh;height:100svh}main{flex:1;display:flex;min-height:0}.fcard{max-width:none;width:100%;min-height:0;height:auto;flex:1;border:0;border-radius:0;box-shadow:none}}
 /* Celulares angostos (320-370 px): el encabezado no se parte */
 .fhead .partner>span{white-space:nowrap}
 @media (max-width:389px){.fhead{gap:10px;padding:14px 10px}.fhead .fword{font-size:19px}.fhead .partner{font-size:8.5px;gap:7px}.fhead .partner img{height:24px}}

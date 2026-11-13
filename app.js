@@ -28,6 +28,9 @@ const PAGO_OK={f:'pago',op:'in',vals:['contraentrega','ambos']};
 const arr=v=>Array.isArray(v)?v:(v===undefined?[]:[v]);
 const descarta=(s,v)=>!!s.end&&(s.endAll?arr(v).length>0&&arr(v).every(x=>s.end.includes(x)):arr(v).some(x=>s.end.includes(x)));
 const HIDE_SEG={f:'chatbot_b3',op:'in',vals:['chatbot']};
+// Si su socio confirma los pedidos ya sabemos que tiene socios: no se le pregunta
+const SOCIO_CONFIRMA={f:'confirma',op:'in',vals:['socio']};
+const conSocio=()=>A.socios==='socios'||A.confirma==='socio';
 const BOT=[['A mano: yo o mi equipo','manual','img:logos/3d/escribe.webp'],['Con un chatbot','chatbot','img:logos/3d/bot.webp']];
 // Si usa chatbot, debajo se abre cuál (pedido de Daniel, 13-nov-2026)
 const CHATBOTS=[['Chatea Pro','chateapro','img:logos/chatea.webp'],['LucidBot','lucidbot','img:logos/lucidbot.webp'],['LiliBot','lilibot','img:logos/lilibot.webp'],['Pancake','pancake','img:logos/pancake.webp'],['SellerChat','sellerchat','img:logos/sellerchat.webp'],['Icomfly','icomfly','img:logos/icomfly.webp'],['Otro','otro','img:logos/3d/otra.webp']];
@@ -49,10 +52,7 @@ const STEPS=[
 {k:'chatbot_otro',type:'text',q:'¿Cuál es? (opcional)',ph:'Nombre del chatbot',show:{f:'chatbot_cual',op:'in',vals:['otro']},g:'operacion',t:'Otro chatbot'},
 {k:'confirma',q:'¿Quién confirma los pedidos?',o:[['Yo mismo','yo','img:logos/3d/persona.webp'],['Mi socio','socio','img:logos/3d/apreton.webp'],['Empleados','empleados','img:logos/3d/equipo.webp'],['Una empresa externa','tercero','img:logos/3d/empresa.webp']],show:PAGO_OK,hide:HIDE_SEG,t:'Quién confirma'},
 {k:'problema',m:true,q:'¿Cuáles son los principales problemas de tu tienda hoy?',h:'Puedes elegir varios.',o:[['Devoluciones','devoluciones','img:logos/3d/paquete.webp'],['Confirmar pedidos','confirmaciones','img:logos/3d/telefono.webp'],['Novedades sin resolver','novedades','img:logos/3d/alerta.webp'],['No doy abasto con los chats','atencion','img:logos/3d/chats.webp'],['Me falta tiempo para crecer','tiempo','img:logos/3d/reloj.webp'],['Mis ventas bajaron','ventas_bajaron','img:logos/3d/baja.webp'],['Ninguno, quiero escalar','escalar','img:logos/3d/cohete.webp']],show:PAGO_OK,hide:HIDE_SEG,t:'Problema'},
-{k:'socios',q:'¿Tomas las decisiones del negocio solo o con socios?',h:'Si tienes socios, en la consultoría deben estar todos los que deciden.',o:[['Solo yo','solo','img:logos/3d/persona.webp'],['Con socio(s) o pareja','socios','img:logos/3d/apreton.webp']],g:'socios',show:PAGO_OK,hide:HIDE_SEG,t:'Socios'},
-{k:'socio_nombre',type:'text',pd:true,q:'Nombre de tu socio(a) o pareja (opcional)',ph:'Ej.: Carlos Pérez',show:{f:'socios',op:'in',vals:['socios']},g:'socios',t:'Nombre del socio'},
-{k:'socio_correo',type:'text',it:'email',pd:true,q:'Su correo, para invitarlo(a) a la reunión (opcional)',ph:'nombre@correo.com',show:{f:'socios',op:'in',vals:['socios']},g:'socios',t:'Correo del socio'},
-{k:'invitado_correo',type:'text',it:'email',pd:true,q:'¿Quieres invitar a alguien más a la reunión? Su correo (opcional)',ph:'nombre@correo.com',show:{f:'socios',op:'in',vals:['solo']},g:'socios',t:'Correo de invitado'},
+{k:'socios',q:'¿Tomas las decisiones del negocio solo o con socios?',h:'Si tienes socios, en la consultoría deben estar todos los que deciden.',o:[['Solo yo','solo','img:logos/3d/persona.webp'],['Con socio(s) o pareja','socios','img:logos/3d/apreton.webp']],show:PAGO_OK,hide:[HIDE_SEG,SOCIO_CONFIRMA],t:'Socios'},
 {k:'contacto',type:'contact',show:PAGO_OK,t:'Datos'},
 {k:'revisando',type:'reveal',show:PAGO_OK,hide:HIDE_SEG,t:'Análisis'}];
 const SCREENS=[];STEPS.forEach(s=>{const last=SCREENS[SCREENS.length-1];if(s.g&&last&&last[0].g===s.g)last.push(s);else SCREENS.push([s])});
@@ -126,7 +126,7 @@ const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function cond(c,ans){const a=ans[c.f];if(a===undefined)return false;
   if(c.op==='in')return arr(a).some(x=>c.vals.includes(x));if(c.op==='gt')return a>c.v;if(c.op==='lt')return a<c.v;if(c.op==='eq')return a===c.v;if(c.op==='between')return a>=c.min&&a<=c.max;return false}
-function vis(s,ans){ans=ans||A;if(s.show&&!(Array.isArray(s.show)?s.show.some(c=>cond(c,ans)):cond(s.show,ans)))return false;if(s.hide&&cond(s.hide,ans))return false;return true}
+function vis(s,ans){ans=ans||A;if(s.show&&!(Array.isArray(s.show)?s.show.some(c=>cond(c,ans)):cond(s.show,ans)))return false;if(s.hide&&(Array.isArray(s.hide)?s.hide.some(c=>cond(c,ans)):cond(s.hide,ans)))return false;return true}
 function scrVis(i,ans){return SCREENS[i].some(s=>vis(s,ans||A))}
 function nextScr(i,ans){for(let j=i+1;j<SCREENS.length;j++)if(scrVis(j,ans))return j;return -1}
 const OPT={ventas:1,plataforma:['dropi'],canal:'pagina',pauta:['meta'],pago:'contraentrega'};
@@ -156,11 +156,11 @@ function agendaHTML(){const o=OUT[fin];const nm=nameOf();const pc0=country();con
   // Si el servidor no pudo guardar, se dice la verdad y se ofrece reintentar (nunca "ya tenemos tus datos")
   if(AG.fallo)return '<div class="result"><div class="badge-ico" style="background:'+KIND.warn[0]+';color:'+KIND.warn[1]+'">'+ICO.warn+'</div><p class="fq">No pudimos guardar tus datos</p><p class="msg">Revisa tu conexión a internet e inténtalo de nuevo.</p><button class="fbtn" id="reint">Intentar de nuevo</button></div>';
   if(AG.sinAgenda)return '<div class="result"><div class="badge-ico" style="background:#f1f7f3;color:#0b6b3a">'+ICO.ok+'</div><p class="fq">¡'+esc(nm||'Listo')+', tu tienda califica!</p><p class="msg">Ya tenemos tus datos. Un consultor te escribe por WhatsApp para agendar tu '+esc(o.dur)+'.</p><button class="flink" id="again">Volver a empezar</button></div>';
-  if(AG.booked){const b=AG.booked;return '<div class="result"><div class="badge-ico" style="background:#f1f7f3;color:#0b6b3a">'+ICO.ok+'</div><p class="fq">¡Listo, '+esc(nm||'listo')+'!</p><p class="msg">'+(b.ya?'Ya tienes agendada tu '+esc(o.dur)+' para el':'Quedó agendada tu '+esc(o.dur)+' para el')+' <b>'+esc(fmt(b.ms,true))+'</b>, '+pais+'.</p><ul class="tips"><li>Te llega la invitación por WhatsApp'+(C.mail?' y al correo':'')+'.</li><li>Conéctate desde el computador, con cámara y buena señal.</li>'+(A.socios==='socios'?'<li>Conéctate con tus socios: deben estar todos los que deciden.</li>':'')+'</ul><button class="flink" id="again">Volver a empezar</button></div>'}
+  if(AG.booked){const b=AG.booked;return '<div class="result"><div class="badge-ico" style="background:#f1f7f3;color:#0b6b3a">'+ICO.ok+'</div><p class="fq">¡Listo, '+esc(nm||'listo')+'!</p><p class="msg">'+(b.ya?'Ya tienes agendada tu '+esc(o.dur)+' para el':'Quedó agendada tu '+esc(o.dur)+' para el')+' <b>'+esc(fmt(b.ms,true))+'</b>, '+pais+'.</p><ul class="tips"><li>Te llega la invitación por WhatsApp'+(C.mail?' y al correo':'')+'.</li><li>Conéctate desde el computador, con cámara y buena señal.</li>'+(conSocio()?'<li>Conéctate con tus socios: deben estar todos los que deciden.</li>':'')+'</ul><button class="flink" id="again">Volver a empezar</button></div>'}
   const title='<p class="fcount">Agenda</p><p class="fq">'+(fin==='b3'?'¡Listo, '+esc(nm)+'!':'¡'+esc(nm)+', tu tienda califica!')+'</p>';
   const aviso=(AG.note?'<p class="llm">'+AG.note+'</p>':'')+(AG.busy?'<p class="intento">Agendando…</p>':'');
   if(AG.mode==='respaldo'){const R=AG.respaldo;
-    return title+'<p class="fh">'+(AG.attempts?'No encontramos ese espacio. ':'')+'Agenda directo con el consultor que tiene más disponibilidad en los próximos dos días. Horarios en '+pais+'.</p>'+aviso+'<div class="calw"><div class="calh">'+ICO.cal+'<div><b>'+esc(R.nombre)+'</b><small>Próximos 2 días</small></div></div><div class="calg">'+R.dias.map(d=>'<div class="cald"><p>'+esc(fmt(Date.parse(d.d+'T12:00:00-05:00')).dia)+'</p>'+(d.slots.length?d.slots.map(ms=>'<button class="calt" data-ms="'+ms+'" data-cl="'+R.cl+'">'+fmt(ms).hora+'</button>').join(''):'<small>Sin espacios</small>')+'</div>').join('')+'</div></div>'}
+    return title+'<p class="fh">'+(AG.attempts?'No encontramos ese espacio. ':'')+'Estos son los horarios libres de los próximos dos días. Horarios en '+pais+'.</p>'+aviso+'<div class="calw"><div class="calh">'+ICO.cal+'<div><b>Horarios disponibles</b><small>Próximos 2 días</small></div></div><div class="calg">'+R.dias.map(d=>'<div class="cald"><p>'+esc(fmt(Date.parse(d.d+'T12:00:00-05:00')).dia)+'</p>'+(d.slots.length?d.slots.map(ms=>'<button class="calt" data-ms="'+ms+'" data-cl="'+R.cl+'">'+fmt(ms).hora+'</button>').join(''):'<small>Sin espacios</small>')+'</div>').join('')+'</div></div>'}
   if(!AG.all.length)return title+aviso+'<p class="msg">En este momento no hay horarios libres en la agenda. Ya tenemos tus datos: un consultor te escribe por WhatsApp para agendar tu '+esc(o.dur)+'.</p><button class="flink" id="again">Volver a empezar</button>';
   const list=AG.list.map(x=>{const f=fmt(x.ms);return '<button class="slot" data-ms="'+x.ms+'" data-cl="'+x.cl+'"><span>'+esc(f.dia)+'</span><b>'+f.hora+'</b></button>'}).join('');
   const other='<button class="slot other'+(AG.mode==='other'?' on':'')+'" id="oth"><span>'+ICO.pen+'Otro día u hora</span><b>Escríbelo</b></button>'+
@@ -212,9 +212,13 @@ function render(){const c=$('card');c.classList.remove('flood');
   if(s.type==='contact'){const seg=A.chatbot_b3==='chatbot';const pc=paisBy(C.pais||'CO');
     const opt=iso=>{const p=paisBy(iso);return '<option value="'+iso+'"'+(pc&&iso===pc[3]?' selected':'')+'>'+p[4]+' '+esc(p[2])+' (+'+p[0]+')</option>'};
     c.innerHTML='<p class="fcount">Tus datos</p><p class="fq">'+(seg?'Te dejamos en seguimiento 💚 ¿Cómo te llamas?':'¿Cómo te llamas?')+REQ+'</p><input class="finput" id="fn" aria-required="true" autocomplete="name" placeholder="Ana Gómez" value="'+esc(C.nombre||'')+'"><label class="flabel" for="ph">'+(seg?'¿A qué WhatsApp te escribimos cuando estés vendiendo más?':'¿A qué número te llamamos? Que tenga WhatsApp.')+REQ+'</label><div class="ftel"><div class="fcc'+(pc?'':' vacio')+'" id="ccb"><span class="flag" id="ccf">'+(pc?pc[4]:'🌎')+'</span><span id="ccv">'+(pc?'+'+pc[0]:'País')+'</span>'+ICO.chev+'<select id="cc" aria-label="País del celular"><optgroup label="Los más frecuentes">'+PAIS_ORDEN.map(opt).join('')+'</optgroup><optgroup label="Todos los países">'+MUNDO.filter(m=>!PAIS_ORDEN.includes(m[0])).map(m=>opt(m[0])).join('')+'</optgroup></select></div><input class="finput" id="ph" aria-required="true" inputmode="tel" autocomplete="tel-national" placeholder="'+(pc?pc[6]:'Número de celular')+'" value="'+esc(C.num||'')+'"></div>'+
-      (seg?'':'<label class="flabel" for="em">¿Y tu correo?'+REQ+'</label><input class="finput" id="em" aria-required="true" type="email" autocomplete="email" placeholder="nombre@mitienda.co" value="'+esc(C.mail||'')+'">')+
+      (seg?'':'<label class="flabel" for="em">¿Y tu correo?'+REQ+'</label><input class="finput" id="em" aria-required="true" type="email" autocomplete="email" placeholder="nombre@mitienda.co" value="'+esc(C.mail||'')+'">'+
+        (conSocio()?'<label class="flabel" for="sn">Tu socio(a), para invitarlo(a) a la reunión <span class="opc">(opcional)</span></label><div class="fdos"><input class="finput" id="sn" autocomplete="off" maxlength="80" placeholder="Nombre" value="'+esc(A.socio_nombre||'')+'"><input class="finput" id="sc" type="email" inputmode="email" autocomplete="off" maxlength="120" placeholder="Correo" value="'+esc(A.socio_correo||'')+'"></div>':'')+
+        // Con socio no va el correo adicional: ya están sus datos y la pantalla quedaría muy cargada (Daniel, 13-nov)
+        (conSocio()?'':'<label class="flabel" for="ic">¿Invitas a alguien más? Su correo <span class="opc">(opcional)</span></label><input class="finput" id="ic" type="email" inputmode="email" autocomplete="off" maxlength="120" placeholder="nombre@correo.com" value="'+esc(A.invitado_correo||'')+'">'))+
       '<p class="ferr" id="er"></p><button class="fbtn" id="snd">'+(seg?'Enviar':'Ver horarios')+'</button><div class="fnav" style="padding-top:12px">'+backBtn+'</div>';
     ['fn','ph','em'].forEach(id=>{if($(id))$(id).addEventListener('input',()=>{$('er').textContent='';clearTimeout(tParcial);tParcial=setTimeout(guardarParcial,40000)})});
+    [['sn','socio_nombre'],['sc','socio_correo'],['ic','invitado_correo']].forEach(([id,k])=>{if($(id))$(id).addEventListener('input',e=>{$('er').textContent='';const v=e.target.value.trim();if(v)A[k]=v;else delete A[k]})});
     $('cc').addEventListener('change',e=>{const p=paisBy(e.target.value);$('ccb').classList.remove('vacio');$('ccf').textContent=p[4];$('ccv').textContent='+'+p[0];$('ph').placeholder=p[6];$('er').textContent='';$('ph').focus()});
     $('snd').addEventListener('click',send);wire();return}
   if(s.type==='reveal'){c.classList.add('flood');const nm=nameOf();const ini=(C.nombre||'?').split(' ').filter(Boolean).map(x=>x[0]).slice(0,2).join('').toUpperCase();
@@ -302,6 +306,9 @@ function leerDatos(){const n=$('fn').value.trim(),iso=$('cc').value,p=iso?paisBy
   return {n,iso,p,t,e,m,mc,contacto:p?{nombre:n,tel:p[0]+t,mail:mc?'':e,tz:p[1],pais:p[2]}:null}}
 function send(){const d=leerDatos(),m=d.m||d.mc;
   if(m){$('er').textContent=m;ev('error',null,m);return}
+  const malo=[['sc','socio_correo','Revisa el correo de tu socio(a): parece incompleto.'],['ic','invitado_correo','Revisa el correo de la persona que invitas: parece incompleto.']].find(([id])=>$(id)&&$(id).value.trim()&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($(id).value.trim()));
+  if(malo){$('er').textContent=malo[2];ev('error',null,'correo '+malo[1]);$(malo[0]).focus();return}
+  ['socio_nombre','socio_correo','invitado_correo'].forEach(k=>{if(A[k])ev('respuesta',k,'lleno')});
   clearTimeout(tParcial);C={nombre:d.n,pais:d.iso,num:d.t,tel:'+'+d.p[0]+' '+d.t,mail:d.e};AG=null;TOKEN=null;
   ULTIMO={respuestas:A,contacto:d.contacto,origen:META.o,s:SES};
   ev('datos','contacto',d.iso);LEAD=guardar();
@@ -321,5 +328,18 @@ function reset(){ev('reinicio');clearT();clearTimeout(tParcial);A={};C={};hist=[
 
 function sizeEmb(){const fw=document.querySelector('.fword'),fc=document.querySelector('.fcard');
   if(fw&&fc){const w=fw.getBoundingClientRect().width;if(w>0)fc.style.setProperty('--emb',Math.round(w*335/645)+'px')}}
+// Ninguna pantalla obliga a bajar (pedido de Daniel, 13-nov): si lo que se ve no cabe en la tarjeta, se compacta por niveles
+// (k1: márgenes e íconos; k2: opciones en fila) y, como último recurso, todo se reduce parejo hasta que quepa.
+let tAjuste=0;
+function ajustar(){const f=$('fcard'),c=$('card');if(!f||!c)return;f.classList.remove('k1','k2');c.style.zoom='';
+  const sobra=()=>{const fin=Math.min(f.getBoundingClientRect().bottom,innerHeight)-parseFloat(getComputedStyle(c).paddingBottom||0)*(+c.style.zoom||1);
+    let abajo=0;for(const e of c.children){const r=e.getBoundingClientRect();if(r.height)abajo=Math.max(abajo,r.bottom)}
+    return abajo>fin+1||document.documentElement.scrollHeight>innerHeight+1};
+  if(!sobra())return;f.classList.add('k1');if(!sobra())return;f.classList.add('k2');if(!sobra())return;
+  let z=1;for(let i=0;i<10&&sobra();i++){z=Math.max(.55,z-.04);c.style.zoom=z}}
+function pedirAjuste(){cancelAnimationFrame(tAjuste);tAjuste=requestAnimationFrame(ajustar)}
+new MutationObserver(pedirAjuste).observe($('fcard'),{childList:true,subtree:true,characterData:true});
+// Al girar o cambiar el tamaño se vuelve a medir, pero no mientras se escribe (el teclado también cambia el alto)
+addEventListener('resize',()=>{const a=document.activeElement;if(!a||!/INPUT|SELECT|TEXTAREA/.test(a.tagName))pedirAjuste()});
 render();
-if(document.fonts&&document.fonts.ready)document.fonts.ready.then(sizeEmb);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{sizeEmb();pedirAjuste()});

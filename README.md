@@ -23,6 +23,13 @@ Formulario de calificación de Fénix Ventures, la vertical logística de Dropi.
   - No corre con ahorro de datos, conexión 2G ni «menos movimiento».
   - El programa que la arma está en `formulario-dforms/herramientas/logo-animar.mjs`.
   - La alternativa sobria, un brillo de sol solo con CSS, está en la rama `logo-sol`.
+- **Sin bajar en ninguna pantalla** (pedido de Daniel, 13-nov-2026): la tarjeta mide lo visible de la pantalla (`100svh`; en computador, hasta 780 px).
+  - Si una pantalla no cabe, `ajustar()` (app.js) la compacta: `k1` achica márgenes e íconos; `k2` pone las opciones en fila, con el ícono al lado del texto; y como último recurso reduce todo parejo (`zoom`, hasta 0,55).
+  - Se vuelve a medir con cada cambio de la pantalla, al cargar las letras y al girar el celular, pero no mientras se escribe.
+  - Ninguna parte se encoge sola (`.fbody>*{flex-shrink:0}`), así nada queda cortado sin verse.
+  - Revisado en 8 tamaños, de 320×460 a 1440×780, y en todas las pantallas.
+- **Socios:** si su socio confirma los pedidos, no se pregunta por socios y se da por hecho que los tiene. El nombre y el correo del socio van en la pantalla de datos, opcionales y solo si tiene socios. Si no tiene socios, sale en su lugar un correo adicional para invitar a alguien más, también opcional.
+- **Agenda:** en el respaldo («próximos 2 días») no se muestra el nombre del consultor, solo los horarios.
 - Pensada para cargar rápido: la portada baja unos 63 KB en total, con letras recortadas en WOFF2 e imágenes en WebP. Los íconos de las preguntas se precargan en segundo plano.
 - **Medición del recorrido:** la página manda a `/api/evento` cada pantalla, respuesta, aviso de error, toque fuera de botón y salida, sin datos personales. Todo queda en la base D1 `fenix-formulario-visitas` (enlace `DB`), y cada visita se une al contacto de GHL cuando deja sus datos.
 - **Panel privado:** `/panel` muestra el embudo, dónde se va la gente, las respuestas, los tiempos y el recorrido de cada persona. Pide la clave `PANEL_KEY` guardada en Cloudflare.
