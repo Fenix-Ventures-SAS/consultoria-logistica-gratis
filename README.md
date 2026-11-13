@@ -4,6 +4,7 @@ Formulario de calificación de Fénix Ventures, la vertical logística de Dropi.
 
 **Estado: en producción (12-nov-2026).** Cada lead que deja sus datos queda en GHL, aunque no toque el botón final (se guarda al salir o tras 40 s sin escribir), y agenda con horarios reales.
 
+- **Direcciones por fuente** (desde el 13-nov-2026): form, form-p-meta, form-p-tiktok, form-p-google, form-ig, form-tkt, form-lkd, form-dropi, form-ref, form-ev-on y form-ev-fis `.fenixventures.co`. Las viejas sin guion (formevon…) siguen activas y `functions/index.js` las lleva a la nueva (301, con UTM). Así sigue funcionando el QR del video, que apunta a formevon. La etiqueta de GHL es exactamente el prefijo nuevo.
 - `functions/api/[[ruta]].js` es el portero, la única parte que habla con GHL. Corre en Cloudflare y la clave vive allá (`GHL2_TOKEN`), nunca en este repositorio.
   - `/api/lead`: crea o actualiza el contacto por WhatsApp sin pisar sus datos, le suma la etiqueta del subdominio (`formevon`, `formpmeta`…), deja la oportunidad de Setter 2.0 en "Requiere atención humana" con todas las respuestas en una nota y devuelve los horarios.
   - `/api/agendar`: vuelve a verificar el horario en GHL, crea la cita (consultor por ventas diarias, como Sofía), guarda `hora_local_cita` y pasa la oportunidad a "Agendado 📆".
