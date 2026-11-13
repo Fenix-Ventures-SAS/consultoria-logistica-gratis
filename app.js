@@ -7,6 +7,11 @@ if(window.top!==window.self){try{window.top.location=window.location.href}catch(
 // Para probar sin dominio se acepta ?fuente=pmeta. Si no coincide con ninguna, queda como "directo".
 const FUENTES={pmeta:'Pauta Meta',ptiktok:'Pauta TikTok',pgoogle:'Pauta Google',ig:'Orgánico Instagram',tkt:'Orgánico TikTok',lkd:'LinkedIn',dropi:'Referidos Dropi',ref:'Referidos',evon:'Eventos online',evfis:'Eventos físicos'};
 const FUENTE=(()=>{const m=location.hostname.match(/^form([a-z]+)\./);const f=(m?m[1]:new URLSearchParams(location.search).get('fuente')||'').toLowerCase();return Object.hasOwn(FUENTES,f)?f:'directo'})();
+// Mientras la página esté en modo prueba (aún no guarda datos), los subdominios reales llevan al formulario
+// de dForms, que sí guarda las respuestas, con la fuente marcada. Las direcciones de prueba muestran esta página.
+if(CONFIG.modoPrueba&&/^form[a-z]*\.fenixventures\.co$/.test(location.hostname)){
+  location.replace('https://app.dforms.ai/989v5e/f/consultoria-logistica-gratis?utm_source='+FUENTE+'&utm_medium=formulario-web&utm_campaign='+FUENTE);
+}
 const ORIGEN=(()=>{const q=new URLSearchParams(location.search),o={};['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid','campaign_id','adset_id','ad_id'].forEach(k=>{const v=q.get(k);if(v)o[k]=v.slice(0,300)});return o})();
 const GT0={f:'ventas',op:'gt',v:0};
 const PLATS=['dropi','effi','hoko','mastershop','otra'],CANAL_OK=['pagina','whatsapp_redes','pagina_whatsapp'],PAUTA_OK=['meta','tiktok','google'];
