@@ -204,9 +204,16 @@ function render(){const c=$('card');c.classList.remove('flood');
     c.innerHTML='<div class="result"><img class="msg-logo" src="logos/dropi.webp" alt="Dropi"><p class="fq">'+esc(s.q)+'</p><p class="msg">'+esc(s.h)+'</p><button class="fbtn" id="cont">Continuar</button></div><div class="fnav">'+backBtn+'</div>';
     $('cont').addEventListener('click',advance);wire();return}
   if(s.type==='slider'){const v=A.ventas!==undefined?A.ventas:s.def;
-    c.innerHTML=counter()+'<p class="fq">'+esc(s.q)+'</p><p class="fh">'+esc(s.h)+'</p><div class="sld"><div class="sval"><span><b id="sv">'+v.toLocaleString('es-CO')+'</b><small>'+esc(s.unit)+'</small></span></div><input type="range" id="sr" min="'+s.min+'" max="'+s.max+'" step="1" value="'+v+'" aria-label="Ventas diarias"><div class="ends"><span>0</span><span>1.000</span></div></div><button class="fbtn" id="nx" style="margin-top:22px">Siguiente</button><div class="fnav">'+backBtn+'</div>';
-    $('sr').addEventListener('input',e=>{$('sv').textContent=(+e.target.value).toLocaleString('es-CO')});
-    $('nx').addEventListener('click',()=>{setAns('ventas',+$('sr').value);advance()});wire();return}
+    // Escala en dos tramos: la primera mitad de la barra va de 0 a 50 pedidos (donde está la mayoría)
+    // y la segunda de 50 a 1.000. Cada mitad tiene 950 posiciones, así que cualquier número es alcanzable.
+    const N=950,aVal=p=>p<=N?Math.round(p*50/N):50+(p-N),aPos=x=>x<=50?Math.round(x*N/50):N+(x-50);
+    c.innerHTML=counter()+'<p class="fq">'+esc(s.q)+'</p><p class="fh">'+esc(s.h)+'</p><div class="sld"><div class="sval"><span><b id="sv">'+v.toLocaleString('es-CO')+'</b><small>'+esc(s.unit)+'</small></span></div><input type="range" id="sr" min="0" max="'+(2*N)+'" step="1" value="'+aPos(v)+'" aria-label="Ventas diarias" aria-valuetext="'+v+' ventas diarias"><div class="ends"><span>0</span><span>50</span><span>1.000</span></div></div><button class="fbtn" id="nx" style="margin-top:22px">Siguiente</button><div class="fnav">'+backBtn+'</div>';
+    const pinta=()=>{const x=aVal(+$('sr').value);$('sv').textContent=x.toLocaleString('es-CO');$('sr').setAttribute('aria-valuetext',x+' ventas diarias')};
+    $('sr').addEventListener('input',pinta);
+    // Con el teclado las flechas avanzan de a un pedido (y Re Pág / Av Pág de a 10), no de a una posición
+    $('sr').addEventListener('keydown',e=>{const d={ArrowRight:1,ArrowUp:1,ArrowLeft:-1,ArrowDown:-1,PageUp:10,PageDown:-10}[e.key];if(!d)return;e.preventDefault();
+      $('sr').value=aPos(Math.min(1000,Math.max(0,aVal(+$('sr').value)+d)));pinta()});
+    $('nx').addEventListener('click',()=>{setAns('ventas',aVal(+$('sr').value));advance()});wire();return}
   if(steps.length===1&&!sc[0].g&&!s.m){
     c.innerHTML=counter()+'<p class="fq">'+esc(s.q)+'</p>'+(s.h?'<p class="fh">'+esc(s.h)+'</p>':'')+cardsHTML(s)+'<div class="fnav">'+backBtn+'</div>';
     c.querySelectorAll('.fc').forEach(b=>b.addEventListener('click',()=>pick(b.dataset.k,b.dataset.v)));wire();return}
