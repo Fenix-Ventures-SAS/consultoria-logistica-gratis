@@ -30,6 +30,7 @@ const OPC = {
   pauta: { meta: 'Meta', tiktok: 'TikTok', google: 'Google', no: 'No pauta' },
   pago: { contraentrega: 'Contraentrega', ambos: 'Contraentrega y anticipado', anticipado: 'Solo anticipado' },
   chatbot: { manual: 'A mano (él o su equipo)', chatbot: 'Con chatbot' },
+  // «Un bot» salió del formulario el 13-nov-2026; se sigue aceptando por si alguien tenía abierta la versión anterior
   confirma: { yo: 'Él mismo', socio: 'Su socio', empleados: 'Empleados', tercero: 'Empresa externa', bot: 'Un bot' },
   problema: { devoluciones: 'Devoluciones', confirmaciones: 'Confirmar pedidos', novedades: 'Novedades sin resolver', atencion: 'No da abasto con los chats', tiempo: 'Le falta tiempo para crecer', ventas_bajaron: 'Sus ventas bajaron', escalar: 'Ninguno, quiere escalar' },
   socios: { solo: 'Decide solo', socios: 'Con socio(s) o pareja' }
