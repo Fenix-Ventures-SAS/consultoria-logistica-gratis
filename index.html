@@ -117,9 +117,8 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .sval span{display:inline-block;min-width:2.6em;font-family:var(--display);font-size:40px;line-height:1;color:var(--f-green);background:var(--f-tint);border-radius:999px;padding:10px 22px;font-variant-numeric:tabular-nums}
 .sld input[type=range]{width:100%;accent-color:#0b6b3a;margin:22px 0 6px;height:28px}
 /* Dedito bajo el círculo de la barra: lo sigue al moverlo e invita a arrastrar */
-/* Anti-robots: solo aparece si Cloudflare necesita que la persona haga un clic */
+/* Anti-robots de Cloudflare en modo invisible: nunca se ve ni pide clic */
 #ts{display:flex;justify-content:center}
-#ts:has(iframe){margin-top:14px}
 .dedo{position:relative;height:34px;pointer-events:none}
 .dedo img{position:absolute;top:0;left:calc(var(--p,0) * (100% - 20px) + 10px);width:28px;height:28px;margin-left:-14px;animation:dedo 1.6s ease-in-out infinite}
 @keyframes dedo{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}

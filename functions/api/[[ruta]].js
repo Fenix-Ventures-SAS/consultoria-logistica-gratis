@@ -221,7 +221,7 @@ function horaLocal(ms, tz, pais) {
   const h = +p.hour, h12 = h % 12 || 12;
   return DIA[d.getUTCDay()] + ', ' + (+p.day) + ' de ' + MES[d.getUTCMonth()] + (h12 === 1 ? ' a la ' : ' a las ') + h12 + ':' + p.minute + (h < 12 ? ' am' : ' pm') + ' (Hora de ' + pais + ')';
 }
-function notaRespuestas(r, c, etiqueta, origen, tier, parcial) {
+function notaRespuestas(r, c, etiqueta, origen, tier, parcial, verificado = true) {
   const lista = (k, v) => [].concat(v).map(x => OPC[k][x]).join(', ');
   const fuente = FUENTES[etiqueta] || 'Pruebas';
   const filas = [
@@ -229,6 +229,7 @@ function notaRespuestas(r, c, etiqueta, origen, tier, parcial) {
     'Entró por: ' + etiqueta + '.fenixventures.co (' + fuente + ')',
     'Resultado: ' + (r.seguimiento ? 'SEGUIMIENTO (vende menos de 20 al día y ya tiene chatbot; no se le ofreció agenda)' : tier + (parcial ? '' : ' · se le mostró la agenda')),
     ...(parcial ? ['⚠️ DEJÓ SUS DATOS PERO NO TOCÓ «' + (r.seguimiento ? 'Enviar' : 'Ver horarios') + '»: hay que escribirle o llamarlo.'] : []),
+    ...(verificado ? [] : ['⚠️ REVISAR: Cloudflare no pudo confirmar que sea una persona (puede ser un robot).']),
     '',
     'Nombre: ' + c.nombre,
     'WhatsApp: ' + c.tel + ' (' + c.pais + ')',
@@ -251,7 +252,7 @@ function notaRespuestas(r, c, etiqueta, origen, tier, parcial) {
   return filas.join('\n');
 }
 
-/* Anti-robots (Turnstile de Cloudflare): se exige en cuanto la clave TURNSTILE_SECRET está guardada en Cloudflare */
+/* Anti-robots (Turnstile de Cloudflare, modo invisible): revisa en cuanto la clave TURNSTILE_SECRET está guardada en Cloudflare */
 async function esPersona(env, token, ip) {
   if (!env.TURNSTILE_SECRET) return true;
   if (typeof token !== 'string' || !token || token.length > 2048) return false;
@@ -377,7 +378,11 @@ async function panel(request, env, cuerpo) {
 async function lead(request, env, cuerpo) {
   const r = leerRespuestas(cuerpo.respuestas), c = leerContacto(cuerpo.contacto);
   if (!r || !c) return falla(400, 'datos');
-  if (!await esPersona(env, cuerpo.ts, request.headers.get('CF-Connecting-IP') || '')) return falla(403, 'robot');
+  // Si Cloudflare no confirma que es una persona, el lead no se pierde: entra marcado para revisar (Daniel, 13-nov).
+  // Para que un robot no llene GHL, sin esa confirmación se aceptan pocos envíos por conexión.
+  const ipLead = request.headers.get('CF-Connecting-IP') || '';
+  const verificado = await esPersona(env, cuerpo.ts, ipLead);
+  if (!verificado && demasiados(ipLead, 'sv', 10, 60 * 60e3)) return falla(429, 'espera');
   const etiqueta = etiquetaDe(request);
   const origen = limpio(cuerpo.origen, 300);
   const tier = tierDe(r.ventas);
@@ -397,7 +402,7 @@ async function lead(request, env, cuerpo) {
   ]);
   let ct = dup.ok && dup.data.contact && dup.data.contact.id ? dup.data.contact : null, nuevo = false;
   if (!ct) {
-    const base = { locationId: LOC, phone: c.tel, ...nombre, source: 'Formulario web ' + etiqueta, tags: [etiqueta] };
+    const base = { locationId: LOC, phone: c.tel, ...nombre, source: 'Formulario web ' + etiqueta, tags: verificado ? [etiqueta] : [etiqueta, 'revisar-antirobots'] };
     let cr = await ghl(env, '/contacts/', { method: 'POST', body: c.mail ? { ...base, email: c.mail } : base });
     if (!cr.ok && c.mail) cr = await ghl(env, '/contacts/', { method: 'POST', body: base }); // el correo ya es de otro contacto
     if (cr.ok && cr.data.contact && cr.data.contact.id) { ct = cr.data.contact; nuevo = true; }
@@ -415,14 +420,14 @@ async function lead(request, env, cuerpo) {
       .catch(e => console.log('visita', e.message));
   }
   // 2. Nota con todas las respuestas. Si antes se guardó sola (salió sin tocar el botón), se completa esa misma nota
-  const texto = notaRespuestas(r, c, etiqueta, origen, tier, parcial);
+  const texto = notaRespuestas(r, c, etiqueta, origen, tier, parcial, verificado);
   const crearNota = () => ghl(env, '/contacts/' + cid + '/notes', { method: 'POST', body: { body: texto } });
   const tareas = [notaPrevia && !parcial
     ? ghl(env, '/contacts/' + cid + '/notes/' + notaPrevia, { method: 'PUT', body: { body: texto } }).then(x => x.ok ? x : crearNota())
     : crearNota()];
   if (!nuevo) {
     // 3. Contacto que ya existía: etiqueta del subdominio (se suma a las que tenga) y solo lo vacío
-    tareas.push(ghl(env, '/contacts/' + cid + '/tags', { method: 'POST', body: { tags: [etiqueta] } }));
+    tareas.push(ghl(env, '/contacts/' + cid + '/tags', { method: 'POST', body: { tags: verificado ? [etiqueta] : [etiqueta, 'revisar-antirobots'] } }));
     const vacio = v => !v || /^[\d\s+().-]+$/.test(String(v).trim());
     const relleno = vacio(ct.firstName) && vacio(ct.lastName) ? { ...nombre } : {};
     if (c.mail && !ct.email) relleno.email = c.mail;
@@ -452,7 +457,7 @@ async function lead(request, env, cuerpo) {
   // Invitados de la cita (socio o la persona adicional): solo los que tienen correo y no repiten el del lead
   const invitados = [[r.socio_nombre || 'Socio(a) de ' + partes[0], r.socio_correo], ['Invitado(a) de ' + partes[0], r.invitado_correo]]
     .filter(([, e]) => e && e !== c.mail);
-  const token = await firmar(env, { c: cid, o: oid, t: tier, n: partes[0], tz: c.tz, p: c.pais, ...(invitar ? { i: invitar } : {}), ...(invitados.length ? { g: invitados } : {}), exp: Date.now() + 3 * 3600e3 });
+  const token = await firmar(env, { c: cid, o: oid, t: tier, n: partes[0], tz: c.tz, p: c.pais, ...(invitar ? { i: invitar } : {}), ...(invitados.length ? { g: invitados } : {}), ...(verificado ? {} : { sv: 1 }), exp: Date.now() + 3 * 3600e3 });
   return json({ ok: true, tier, token, agenda: await agenda });
 }
 
@@ -519,7 +524,7 @@ async function agendar(request, env, cuerpo, enFondo) {
   }
   await Promise.all([
     T.o && I ? ghl(env, '/opportunities/' + T.o, { method: 'PUT', body: { pipelineId: I.pipeline, pipelineStageId: I.agendado, status: 'open' } }) : null,
-    ghl(env, '/contacts/' + T.c + '/notes', { method: 'POST', body: { body: '📆 AGENDÓ DESDE EL FORMULARIO WEB\nCon: ' + CAL[cl].nombre + ' (' + T.t + ')\nHora Colombia: ' + horaLocal(ms, 'America/Bogota', 'Colombia') + '\nHora del lead: ' + hora + (conInvitados
+    ghl(env, '/contacts/' + T.c + '/notes', { method: 'POST', body: { body: '📆 AGENDÓ DESDE EL FORMULARIO WEB' + (T.sv ? ' (⚠️ revisar: no pasó el anti-robots)' : '') + '\nCon: ' + CAL[cl].nombre + ' (' + T.t + ')\nHora Colombia: ' + horaLocal(ms, 'America/Bogota', 'Colombia') + '\nHora del lead: ' + hora + (conInvitados
       ? '\nInvitados de la cita (quedan en la invitación de Google con el Meet): ' + guests.map(g => g.fullName + ' <' + g.email + '>').join(', ')
       : T.i ? '\nInvitar también a la reunión: ' + limpio(T.i, 300) + ' (agrégalos a la invitación)' : '') } })
   ]);

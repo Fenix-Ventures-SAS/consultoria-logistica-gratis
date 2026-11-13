@@ -33,7 +33,10 @@ Formulario de calificación de Fénix Ventures, la vertical logística de Dropi.
 - Pensada para cargar rápido: la portada baja unos 63 KB en total, con letras recortadas en WOFF2 e imágenes en WebP. Los íconos de las preguntas se precargan en segundo plano.
 - **Medición del recorrido:** la página manda a `/api/evento` cada pantalla, respuesta, aviso de error, toque fuera de botón y salida, sin datos personales. Todo queda en la base D1 `fenix-formulario-visitas` (enlace `DB`), y cada visita se une al contacto de GHL cuando deja sus datos.
 - **Panel privado:** `/panel` muestra el embudo, dónde se va la gente, las respuestas, los tiempos y el recorrido de cada persona. Pide la clave `PANEL_KEY` guardada en Cloudflare.
-- **Anti-robots:** Turnstile de Cloudflare, en modo "managed" con `interaction-only`, así casi nadie lo ve. Se exige en cuanto exista `TURNSTILE_SECRET`.
+- **Anti-robots:** Turnstile de Cloudflare en modo invisible (pedido de Daniel, 13-nov-2026): nunca se ve ni pide clic. Cloudflare exige mencionarlo en la política de privacidad, y ya está en fenixventures.co/politica-privacidad.
+  - Si Cloudflare no confirma que es una persona, el lead no se pierde: entra con la etiqueta `revisar-antirobots` y un aviso en la nota.
+  - Sin esa confirmación se aceptan hasta 10 envíos por conexión por hora.
+  - La página no espera más de 8 s por la revisión, y si falla sigue de inmediato.
 - No hay claves en este repositorio.
 
 ## Créditos

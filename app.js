@@ -276,17 +276,19 @@ function animarLogo(){const cn=navigator.connection;if(animLogo||RM||(cn&&(cn.sa
     setTimeout(()=>im.classList.add('fuera'),4500);setTimeout(()=>im.remove(),5200)}).catch(()=>{})}
 // Anti-robots de Cloudflare (Turnstile): casi siempre invisible; solo pide un clic si ve algo sospechoso.
 // Se carga al empezar, así el permiso está listo cuando la persona deja sus datos.
-const TS_KEY='0x4AAAAAAF-8NxKnzOw1XekY';let tsId=null,tsTok=null;const tsEspera=[];
+const TS_KEY='0x4AAAAAAF-8NxKnzOw1XekY';let tsId=null,tsTok=null,tsFallo=false;const tsEspera=[];
 function cargarTS(){if(window.tsListo)return;
   window.tsListo=()=>{const d=document.createElement('div');d.id='ts';$('fcard').appendChild(d);if(window.ResizeObserver)new ResizeObserver(pedirAjuste).observe(d);
     tsId=turnstile.render(d,{sitekey:TS_KEY,appearance:'interaction-only',theme:'light',language:'es',
-      callback:t=>{const f=tsEspera.shift();if(f)f(t);else tsTok=t},'expired-callback':()=>{tsTok=null},'error-callback':()=>{tsTok=null}})};
+      callback:t=>{tsFallo=false;const f=tsEspera.shift();if(f)f(t);else tsTok=t},'expired-callback':()=>{tsTok=null},
+      // Si Cloudflare no logra revisar, no se espera: se envía igual y el servidor deja el lead marcado para revisar
+      'error-callback':()=>{tsTok=null;tsFallo=true;tsEspera.splice(0).forEach(f=>f(''))}})};
   const s=document.createElement('script');s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?onload=tsListo&render=explicit';s.async=true;document.head.appendChild(s)}
 // Entrega un permiso de un solo uso (espera hasta 15 s si aún se está verificando) y pide otro para el siguiente envío
 function tokenTS(){return new Promise(res=>{let listo=false;
-  const usar=t=>{if(listo)return;listo=true;tsTok=null;if(tsId!==null)setTimeout(()=>window.turnstile.reset(tsId),0);res(t)};
-  if(tsTok)return usar(tsTok);tsEspera.push(usar);
-  setTimeout(()=>{const i=tsEspera.indexOf(usar);if(i>=0)tsEspera.splice(i,1);if(!listo){listo=true;res('')}},15000)})}
+  const usar=t=>{if(listo)return;listo=true;tsTok=null;if(tsId!==null)setTimeout(()=>{try{window.turnstile.reset(tsId)}catch(e){}},0);res(t)};
+  if(tsTok)return usar(tsTok);if(tsFallo){tsFallo=false;return usar('')}tsEspera.push(usar);
+  setTimeout(()=>{const i=tsEspera.indexOf(usar);if(i>=0)tsEspera.splice(i,1);if(!listo){listo=true;res('')}},8000)})}
 function start(){ev('empezar','portada');clearT();hist=[];AG=null;cur=nextScr(-1,{ventas:1});render();cargarTS();
   if(!iconosPrecargados){iconosPrecargados=true;(window.requestIdleCallback||(f=>setTimeout(f,200)))(precargarIconos)}}
 function advance(){hist.push(cur);const n=nextScr(cur);if(n<0){fin=outcome()}else cur=n;render()}
