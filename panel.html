@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Panel de visitas · Fénix</title>
+<link rel="icon" href="icono.webp">
+<style>
+@font-face{font-family:Museo;src:url(fonts/museo-700.woff2) format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:Figtree;src:url(fonts/figtree.woff2) format('woff2');font-weight:400 600;font-display:swap}
+:root{--bg:#f7f5ef;--card:#fff;--tx:#1f2a23;--tx2:#4b5a50;--mut:#6b776f;--line:#e4e8e3;--bar:#0b6b3a;--track:#eef2ee;--ok:#0b6b3a;--alerta:#8d6208;--display:Museo,Georgia,serif;--body:Figtree,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#121412;--card:#1a1a19;--tx:#eef2ee;--tx2:#c3ccc5;--mut:#98a39b;--line:#2d322e;--bar:#3fa06e;--track:#242824;--ok:#5fbf8a;--alerta:#e0b04a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+main{max-width:980px;margin:0 auto;padding:24px 16px 64px}
+h1{font:700 26px/1.2 var(--display);margin:0}
+h2{font:700 17px/1.3 var(--display);margin:0 0 4px}
+.sub{color:var(--mut);font-size:13px;margin:2px 0 14px}
+header{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+.filtros{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select,input,button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 12px}
+button{cursor:pointer;background:var(--bar);border-color:var(--bar);color:#fff;font-weight:600}
+button.sec{background:var(--card);color:var(--tx);border-color:var(--line)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.kpi b{display:block;font:700 30px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.kpi span{color:var(--tx2);font-size:13px}
+.kpi small{color:var(--mut);font-size:12px}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.dos{grid-template-columns:1fr}}
+.dos .card{margin-bottom:0}
+.barras{display:flex;flex-direction:column;gap:2px}
+.fila{display:grid;grid-template-columns:minmax(110px,34%) 1fr auto;gap:10px;align-items:center;padding:5px 0;border-radius:6px}
+.fila:hover{background:var(--track)}
+.fila .nom{font-size:13.5px;color:var(--tx);overflow-wrap:anywhere}
+.fila .pista{height:14px;position:relative}
+.fila .pista i{position:absolute;left:0;top:0;bottom:0;max-width:100%;background:var(--bar);border-radius:0 4px 4px 0;min-width:2px}
+.fila .val{font-size:13px;color:var(--tx2);font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+.fila .val em{font-style:normal;color:var(--alerta)}
+.preg{margin-top:12px}
+.preg h3{font:600 13px/1.3 var(--body);color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin:0 0 4px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-weight:600;color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.vacio{color:var(--mut);font-size:13.5px;margin:6px 0}
+.persona{border-top:1px solid var(--line);padding:10px 0}
+.persona:first-child{border-top:0}
+.persona summary{cursor:pointer;list-style:none;display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:baseline}
+.persona summary::-webkit-details-marker{display:none}
+.persona .hora{font-variant-numeric:tabular-nums;color:var(--tx2);font-size:13px;white-space:nowrap}
+.persona .que{font-size:14px}
+.persona .marca{font-size:12px;color:var(--mut);white-space:nowrap}
+.etq{display:inline-block;font-size:11.5px;padding:1px 8px;border-radius:999px;background:var(--track);color:var(--tx2);margin-right:4px}
+.etq.ok{background:var(--ok);color:#fff}
+.linea{margin:8px 0 2px 0;padding:0 0 0 14px;border-left:2px solid var(--line);list-style:none;font-size:13px}
+.linea li{padding:2px 0;color:var(--tx2)}
+.linea li b{font-weight:600;color:var(--tx)}
+.linea .t{display:inline-block;min-width:52px;color:var(--mut);font-variant-numeric:tabular-nums}
+a{color:var(--bar)}
+#login{max-width:380px}
+#login p{color:var(--tx2);font-size:14px}
+#login form{display:flex;gap:8px}
+#login input{flex:1}
+.err{color:var(--alerta);font-size:13.5px;min-height:20px;margin:8px 0 0}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div><h1>Visitas del formulario</h1><p class="sub" id="estado">Consultoría Logística Gratis · recorrido de cada persona</p></div>
+  <div class="filtros" id="filtros" hidden>
+    <select id="dias" aria-label="Periodo"><option value="1">Últimas 24 horas</option><option value="7" selected>Últimos 7 días</option><option value="30">Últimos 30 días</option><option value="3650">Todo</option></select>
+    <select id="fuente" aria-label="Fuente"><option value="">Todas las fuentes</option></select>
+    <button class="sec" id="recargar" type="button">Actualizar</button>
+  </div>
+</header>
+<section class="card" id="login">
+  <h2>Entrar al panel</h2>
+  <p>Escribe la clave del panel (la que guardaste en Cloudflare como PANEL_KEY).</p>
+  <form id="fclave"><input id="clave" type="password" autocomplete="current-password" aria-label="Clave del panel"><button type="submit">Entrar</button></form>
+  <p class="err" id="lerr"></p>
+</section>
+<section id="datos" hidden></section>
+</main>
+<script src="panel.js"></script>
+</body>
+</html>

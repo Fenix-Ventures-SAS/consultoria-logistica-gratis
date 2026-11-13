@@ -4,6 +4,23 @@ if(window.top!==window.self){try{window.top.location=window.location.href}catch(
 // Origen del clic: UTM, fbclid e ids de Meta del enlace. Va en la nota del contacto en GHL.
 // La fuente (etiqueta formevon, formpmeta…) la pone el servidor según el subdominio por el que entró.
 const ORIGEN=(()=>{const q=new URLSearchParams(location.search),o={};['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid','campaign_id','adset_id','ad_id'].forEach(k=>{const v=q.get(k);if(v)o[k]=v.slice(0,300)});return o})();
+/* Medición del recorrido, sin datos personales: pantallas, respuestas, errores, clics fuera de botones y salida.
+   Va a la base de visitas de Cloudflare (/api/evento) para estudiar dónde avanza y dónde se va cada persona. */
+const SES=Array.from(crypto.getRandomValues(new Uint8Array(10)),b=>b.toString(36).padStart(2,'0')).join('');
+const META={o:Object.entries(ORIGEN).map(([k,v])=>k+'='+v).join(' · ').slice(0,200),w:screen.width+'x'+screen.height,
+  r:(()=>{try{return document.referrer?new URL(document.referrer).hostname:''}catch(e){return ''}})()};
+let colaEv=[],pasoAct='',tPaso=performance.now();
+function ev(tipo,paso,valor,ms){colaEv.push([tipo,paso==null?pasoAct:paso,valor==null?null:String(valor).slice(0,80),ms==null?null:Math.round(ms),Date.now()]);if(colaEv.length>=20)enviarEv()}
+function enviarEv(){if(!colaEv.length)return;const e=colaEv.splice(0,40);
+  fetch('/api/evento',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({s:SES,m:META,e}),keepalive:true}).catch(()=>{})}
+// Cada cambio de pantalla guarda de cuál venía y cuánto tiempo estuvo en ella
+function marcarPaso(p){if(p===pasoAct)return;const t=performance.now();ev('pantalla',p,pasoAct||null,pasoAct?t-tPaso:null);pasoAct=p;tPaso=t}
+setInterval(enviarEv,4000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){ev('salida',null,null,performance.now()-tPaso);enviarEv()}else ev('volver')});
+// Clics fuera de botones y campos: muestran qué cosas la gente cree que se pueden tocar
+document.addEventListener('click',e=>{const t=e.target;if(!(t instanceof Element)||t.closest('button,a,input,select,label,textarea'))return;
+  const z=t.closest('[id]'),cl=typeof t.className==='string'&&t.className?t.className.split(' ')[0]:t.tagName.toLowerCase();
+  ev('clic_vacio',null,(z?z.id+' ':'')+cl+' '+(t.textContent||'').trim().slice(0,30))},{passive:true});
 const GT0={f:'ventas',op:'gt',v:0};
 const PLATS=['dropi','effi','hoko','mastershop','otra'],CANAL_OK=['pagina','whatsapp_redes','pagina_whatsapp'],PAUTA_OK=['meta','tiktok','google'];
 // Cada pregunta aparece solo si la anterior quedó bien respondida: así ningún descartado llega a los datos
@@ -143,33 +160,38 @@ function agendaHTML(){const o=OUT[fin];const nm=nameOf();const pc0=country();con
 
 // La cita se crea en GHL; si el horario se ocupó en el camino, llegan horarios nuevos
 async function book(ms,cl){if(AG.busy)return;AG.busy=true;render();
+  const pos=AG.mode==='respaldo'?'respaldo':'opción '+(AG.list.findIndex(x=>x.ms===ms)+1);ev('horario','agenda',pos+' · en '+Math.round((ms-Date.now())/36e5)+' h');
   const r=await api('agendar',{token:TOKEN,ms,cl});if(!AG)return;AG.busy=false;
-  if(r.ok){AG.booked={ms:r.ms,ya:!!r.ya};render();return}
-  if(r.status===409&&r.agenda){startAgenda(r.agenda);AG.note='Ese horario se acaba de ocupar. Elige otro.';render();return}
+  if(r.ok){ev(r.ya?'agenda_error':'agendado','agenda',r.ya?'ya tenía cita':cl);AG.booked={ms:r.ms,ya:!!r.ya};render();return}
+  if(r.status===409&&r.agenda){ev('ocupado','agenda');startAgenda(r.agenda);AG.note='Ese horario se acaba de ocupar. Elige otro.';render();return}
+  ev('agenda_error','agenda',r.error||r.status);
   AG.note='No pudimos agendar en este momento. Ya tenemos tus datos: un consultor te escribe por WhatsApp para confirmar tu cita.';render()}
 // Las 5 primeras opciones quedan separadas al menos una hora, como las ofrece Sofía
 function espaciar(all){const out=[];all.forEach(x=>{if(out.length<5&&(!out.length||x.ms-out[out.length-1].ms>=3600e3))out.push(x)});return out}
-function startAgenda(ag){AG=ag?{all:ag.opciones||[],respaldo:ag.respaldo,mode:'list',attempts:0,note:'',booked:null}:{sinAgenda:true};if(!AG.all)return;AG.list=espaciar(AG.all);if(!AG.all.length&&AG.respaldo)AG.mode='respaldo'}
-function searchOther(){const txt=$('othtxt').value.trim();if(!txt){$('otherr').textContent='Escribe el día o la hora que prefieres.';return}
+function startAgenda(ag){ev('agenda','agenda',ag?(ag.opciones||[]).length+' opciones':'sin agenda');AG=ag?{all:ag.opciones||[],respaldo:ag.respaldo,mode:'list',attempts:0,note:'',booked:null}:{sinAgenda:true};if(!AG.all)return;AG.list=espaciar(AG.all);if(!AG.all.length&&AG.respaldo)AG.mode='respaldo'}
+function searchOther(){const txt=$('othtxt').value.trim();if(!txt){$('otherr').textContent='Escribe el día o la hora que prefieres.';ev('error','agenda','otro vacío');return}
   const ms=parseReq(txt);AG.lastTxt=txt;
+  ev('texto','agenda',(ms===null?'no entendió: ':'')+txt.slice(0,60));
   if(ms===null){$('otherr').textContent='No entendí el día o la hora. Prueba así: «mañana a las 3 pm».';return}
   const exact=AG.all.find(x=>x.ms===ms);const said='Entendimos: <b>'+esc(fmt(ms,true))+'</b>.';
   if(exact){AG.note=said;book(exact.ms,exact.cl);return}
   AG.attempts++;
-  if(AG.attempts>=2&&AG.respaldo){AG.mode='respaldo';AG.note='';render();return}
+  if(AG.attempts>=2&&AG.respaldo){ev('respaldo','agenda');AG.mode='respaldo';AG.note='';render();return}
   const near=AG.all.slice().sort((a,b)=>Math.abs(a.ms-ms)-Math.abs(b.ms-ms)).slice(0,5).sort((a,b)=>a.ms-b.ms);
   AG.list=near;AG.mode='list';AG.lastTxt='';AG.note=said+' Ese espacio no está libre; estas son las 5 opciones más cercanas.';render()}
 
 function render(){const c=$('card');c.classList.remove('flood');
+  const pv=fin?(['b1','b2','b3'].includes(fin)?'agenda':'fin_'+fin):cur<0?'portada':(SCREENS[cur].find(x=>vis(x))||SCREENS[cur][0]);
+  const paso=typeof pv==='string'?pv:pv.g||pv.k;if(fin&&paso!==pasoAct){marcarPaso(paso);ev('resultado',paso,fin)}else marcarPaso(paso);
   // Portada en verde oscuro; de la primera pregunta en adelante, fondo beige muy claro
   $('fcard').classList.toggle('osc',cur<0&&!fin);
   if(fin){const o=OUT[fin];
     if(['b1','b2','b3'].includes(fin)){if(!AG)startAgenda(null);c.innerHTML=agendaHTML();
       c.querySelectorAll('.slot[data-ms],.calt').forEach(b=>b.addEventListener('click',()=>book(+b.dataset.ms,b.dataset.cl)));
-      if($('oth'))$('oth').addEventListener('click',()=>{AG.mode=AG.mode==='other'?'list':'other';render();if($('othtxt'))$('othtxt').focus()});
+      if($('oth'))$('oth').addEventListener('click',()=>{if(AG.mode!=='other')ev('otro','agenda');AG.mode=AG.mode==='other'?'list':'other';render();if($('othtxt'))$('othtxt').focus()});
       if($('othgo')){$('othgo').addEventListener('click',searchOther);$('othtxt').addEventListener('keydown',e=>{if(e.key==='Enter')searchOther()})}
       if($('again'))$('again').addEventListener('click',reset);
-      if($('reint'))$('reint').addEventListener('click',()=>{LEAD=tokenTS().then(ts=>api('lead',{...ULTIMO,ts}));fin=null;AG=null;render()});return}
+      if($('reint'))$('reint').addEventListener('click',()=>{ev('reintentar');LEAD=guardar();fin=null;AG=null;render()});return}
     const k=KIND[o.kind];const nm=nameOf();
     c.innerHTML='<div class="result"><div class="badge-ico" style="background:'+k[0]+';color:'+k[1]+'">'+ICO[o.kind]+'</div><p class="fq">'+esc(o.label)+'</p><p class="msg">'+esc(o.msg).replace(/\n/g,'<br>')+'</p><button class="flink" id="again">Volver a empezar</button></div>';
     $('again').addEventListener('click',reset);return}
@@ -204,11 +226,11 @@ function render(){const c=$('card');c.classList.remove('flood');
     const N=900,aVal=p=>p<=N?Math.round(p*100/N):100+(p-N),aPos=x=>x<=100?Math.round(x*N/100):N+(x-100);
     c.innerHTML=counter()+'<p class="fq">'+esc(s.q)+'</p><p class="fh">'+esc(s.h)+'</p><div class="sld"><div class="sval"><span><b id="sv">'+v.toLocaleString('es-CO')+'</b><small>'+esc(s.unit)+'</small></span></div><input type="range" id="sr" min="0" max="'+(2*N)+'" step="1" value="'+aPos(v)+'" aria-label="Ventas diarias" aria-valuetext="'+v+' ventas diarias"><div class="dedo" id="dd" aria-hidden="true" style="--p:'+(aPos(v)/(2*N))+'"><img src="logos/emoji/1f446-1f3fb.svg" alt=""></div></div><button class="fbtn" id="nx" style="margin-top:22px">Siguiente</button><div class="fnav">'+backBtn+'</div>';
     const pinta=()=>{const x=aVal(+$('sr').value);$('sv').textContent=x.toLocaleString('es-CO');$('sr').setAttribute('aria-valuetext',x+' ventas diarias');$('dd').style.setProperty('--p',$('sr').value/(2*N))};
-    $('sr').addEventListener('input',pinta);
+    let movio=false;$('sr').addEventListener('input',()=>{pinta();if(!movio){movio=true;ev('desliza')}});
     // Con el teclado las flechas avanzan de a un pedido (y Re Pág / Av Pág de a 10), no de a una posición
     $('sr').addEventListener('keydown',e=>{const d={ArrowRight:1,ArrowUp:1,ArrowLeft:-1,ArrowDown:-1,PageUp:10,PageDown:-10}[e.key];if(!d)return;e.preventDefault();
       $('sr').value=aPos(Math.min(1000,Math.max(0,aVal(+$('sr').value)+d)));pinta()});
-    $('nx').addEventListener('click',()=>{setAns('ventas',aVal(+$('sr').value));advance()});wire();return}
+    $('nx').addEventListener('click',()=>{const x=aVal(+$('sr').value);ev('respuesta','ventas',x);setAns('ventas',x);advance()});wire();return}
   if(steps.length===1&&!sc[0].g&&!s.m){
     c.innerHTML=counter()+'<p class="fq">'+esc(s.q)+'</p>'+(s.h?'<p class="fh">'+esc(s.h)+'</p>':'')+cardsHTML(s)+'<div class="fnav">'+backBtn+'</div>';
     c.querySelectorAll('.fc').forEach(b=>b.addEventListener('click',()=>pick(b.dataset.k,b.dataset.v)));wire();return}
@@ -216,7 +238,8 @@ function render(){const c=$('card');c.classList.remove('flood');
   c.innerHTML=counter()+steps.map(x=>x.type==='text'?'<div class="grp"><label class="flabel" for="tx_'+x.k+'">'+esc(x.q)+'</label><input class="finput" id="tx_'+x.k+'" data-t="'+x.k+'" placeholder="'+esc(x.ph||'')+'" value="'+esc(A[x.k]||'')+'"></div>':'<div class="grp"><p class="fq'+(multi?' sm':'')+'">'+esc(x.q)+'</p>'+(x.h?'<p class="fh">'+esc(x.h)+'</p>':'')+cardsHTML(x)+'</div>').join('')+'<p class="ferr" id="er"></p><button class="fbtn" id="nx">Siguiente</button><div class="fnav">'+backBtn+'</div>';
   c.querySelectorAll('.fc').forEach(b=>b.addEventListener('click',()=>{toggle(b.dataset.k,b.dataset.v);render();const t=c.querySelector('[data-t]');if(t)t.focus()}));
   c.querySelectorAll('[data-t]').forEach(t=>t.addEventListener('input',()=>{A[t.dataset.t]=t.value}));
-  $('nx').addEventListener('click',()=>{const miss=sc.filter(x=>vis(x)&&x.o&&!arr(A[x.k]).length);if(miss.length){$('er').textContent='Elige una opción para seguir.';return}
+  $('nx').addEventListener('click',()=>{const miss=sc.filter(x=>vis(x)&&x.o&&!arr(A[x.k]).length);if(miss.length){$('er').textContent='Elige una opción para seguir.';ev('error',null,'sin opción');return}
+    sc.filter(x=>vis(x)).forEach(x=>{if(x.o)ev('respuesta',x.k,arr(A[x.k]).join('+'));else if(x.type==='text'&&A[x.k])ev('respuesta',x.k,A[x.k])});
     const ko=sc.find(x=>vis(x)&&descarta(x,A[x.k]));if(ko){hist.push(cur);fin=outcome();render();return}advance()});wire()}
 
 function clearT(){timers.forEach(clearTimeout);timers=[]}
@@ -243,11 +266,11 @@ function tokenTS(){return new Promise(res=>{let listo=false;
   const usar=t=>{if(listo)return;listo=true;tsTok=null;if(tsId!==null)setTimeout(()=>window.turnstile.reset(tsId),0);res(t)};
   if(tsTok)return usar(tsTok);tsEspera.push(usar);
   setTimeout(()=>{const i=tsEspera.indexOf(usar);if(i>=0)tsEspera.splice(i,1);if(!listo){listo=true;res('')}},15000)})}
-function start(){clearT();hist=[];AG=null;cur=nextScr(-1,{ventas:1});render();cargarTS();
+function start(){ev('empezar','portada');clearT();hist=[];AG=null;cur=nextScr(-1,{ventas:1});render();cargarTS();
   if(!iconosPrecargados){iconosPrecargados=true;(window.requestIdleCallback||(f=>setTimeout(f,200)))(precargarIconos)}}
 function advance(){hist.push(cur);const n=nextScr(cur);if(n<0){fin=outcome()}else cur=n;render()}
-function pick(k,v){setAns(k,v);const s=STEPS.find(x=>x.k===k);if(s.end&&s.end.includes(v)){hist.push(cur);fin=outcome();render();return}advance()}
-function back(){clearT();fin=null;AG=null;cur=hist.length?hist.pop():-1;render()}
+function pick(k,v){ev('respuesta',k,v);setAns(k,v);const s=STEPS.find(x=>x.k===k);if(s.end&&s.end.includes(v)){hist.push(cur);fin=outcome();render();return}advance()}
+function back(){ev('atras');clearT();fin=null;AG=null;cur=hist.length?hist.pop():-1;render()}
 // Dígitos exactos del celular, sin indicativo ni 0 inicial. Los 8 países de Fénix los traen en PAISES; estos son los demás mercados.
 // Territorios del Caribe con indicativo +1xxx: 7 dígitos. Países que no estén aquí: revisión general de largo.
 const LARGO={PE:[9],VE:[10],BO:[8],UY:[8],BR:[10,11],CR:[8],SV:[8],HN:[8],NI:[8],DO:[10],CU:[8],PR:[10],US:[10],CA:[10],ES:[9],PT:[9],IT:[9,10],FR:[9],DE:[10,11],GB:[10],HT:[8],BZ:[7],GY:[7],SR:[7]};
@@ -260,12 +283,14 @@ function send(){const n=$('fn').value.trim(),iso=$('cc').value,p=iso?paisBy(iso)
   else if(!L&&(t.length<6||t.length>14))m='Revisa el número: parece incompleto.';
   else if($('em')&&!e)m='Escribe tu correo para continuar.';
   else if(e&&!/^\S+@\S+\.\S+$/.test(e))m='Revisa el correo: parece incompleto.';
-  if(m){$('er').textContent=m;return}
+  if(m){$('er').textContent=m;ev('error',null,m);return}
   C={nombre:n,pais:iso,num:t,tel:'+'+p[0]+' '+t,mail:e};AG=null;TOKEN=null;
-  ULTIMO={respuestas:A,contacto:{nombre:n,tel:p[0]+t,mail:e,tz:p[1],pais:p[2]},origen:Object.entries(ORIGEN).map(([k,v])=>k+'='+v).join(' · ')};
-  LEAD=tokenTS().then(ts=>api('lead',{...ULTIMO,ts}));
+  ULTIMO={respuestas:A,contacto:{nombre:n,tel:p[0]+t,mail:e,tz:p[1],pais:p[2]},origen:META.o,s:SES};
+  ev('datos','contacto',iso);LEAD=guardar();
   advance()}
-function reset(){clearT();A={};C={};hist=[];cur=-1;fin=null;AG=null;LEAD=null;TOKEN=null;ULTIMO=null;render()}
+// Envía los datos al servidor (con el permiso anti-robots) y deja registrado si se guardaron
+function guardar(){return tokenTS().then(ts=>api('lead',{...ULTIMO,ts})).then(r=>{ev('guardado','contacto',r&&r.ok?'ok':'fallo '+(r&&(r.error||r.status)));return r})}
+function reset(){ev('reinicio');clearT();A={};C={};hist=[];cur=-1;fin=null;AG=null;LEAD=null;TOKEN=null;ULTIMO=null;render()}
 
 function sizeEmb(){const fw=document.querySelector('.fword'),fc=document.querySelector('.fcard');
   if(fw&&fc){const w=fw.getBoundingClientRect().width;if(w>0)fc.style.setProperty('--emb',Math.round(w*335/645)+'px')}}

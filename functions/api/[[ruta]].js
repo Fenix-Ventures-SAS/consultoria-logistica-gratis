@@ -2,6 +2,8 @@
    POST /api/lead     → crea o actualiza el contacto, le pone la etiqueta del subdominio, deja la oportunidad
                         en Setter 2.0 "Requiere atención humana" con las respuestas en notas y devuelve los horarios.
    POST /api/agendar  → vuelve a verificar el horario, crea la cita y pasa la oportunidad a "Agendado 📆".
+   POST /api/evento   → guarda el recorrido de cada visita (pantallas, respuestas, errores, clics, salida), sin datos personales.
+   POST /api/panel    → entrega las cifras del panel privado; exige la clave PANEL_KEY guardada en Cloudflare.
    Agenda con las reglas de Sofía (flujos KAd4A y knRiI): consultor por ventas diarias, 36 h sin domingos ni
    festivos, mínimo 90 min de anticipación, a la misma hora desempata el orden de prioridad. */
 
@@ -244,6 +246,114 @@ async function esPersona(env, token, ip) {
 // Solo se atiende desde las direcciones oficiales (no desde copias viejas de la página)
 const HOST_OK = /^(form[a-z]*\.fenixventures\.co|consultoria-logistica-gratis\.pages\.dev)$/;
 
+/* ---------- Base de visitas (D1) ---------- */
+// Las tablas se crean solas la primera vez; así el esquema vive en este archivo
+let BASE_LISTA = false;
+async function base(env) {
+  if (BASE_LISTA) return;
+  await env.DB.batch([
+    env.DB.prepare(`CREATE TABLE IF NOT EXISTS sesiones (sesion TEXT PRIMARY KEY, inicio INTEGER NOT NULL, ultimo INTEGER, fuente TEXT,
+      pais TEXT, dispositivo TEXT, navegador TEXT, origen TEXT, referido TEXT, pantalla TEXT, avance TEXT, empezo INTEGER DEFAULT 0,
+      datos INTEGER DEFAULT 0, resultado TEXT, agendo INTEGER DEFAULT 0, contacto TEXT)`),
+    env.DB.prepare(`CREATE TABLE IF NOT EXISTS eventos (id INTEGER PRIMARY KEY AUTOINCREMENT, sesion TEXT NOT NULL, ts INTEGER NOT NULL,
+      tipo TEXT NOT NULL, paso TEXT, valor TEXT, ms_paso INTEGER)`),
+    env.DB.prepare('CREATE INDEX IF NOT EXISTS eventos_sesion ON eventos (sesion, ts)'),
+    env.DB.prepare('CREATE INDEX IF NOT EXISTS sesiones_inicio ON sesiones (inicio)')
+  ]);
+  BASE_LISTA = true;
+}
+const SESION_OK = /^[a-z0-9]{8,32}$/;
+const TIPOS_EV = new Set(['pantalla', 'empezar', 'respuesta', 'desliza', 'atras', 'error', 'resultado', 'datos', 'guardado', 'agenda', 'horario',
+  'otro', 'texto', 'respaldo', 'agendado', 'ocupado', 'agenda_error', 'reintentar', 'reinicio', 'clic_vacio', 'salida', 'volver']);
+
+/* ---------- POST /api/evento ---------- */
+async function evento(request, env, cuerpo) {
+  if (!env.DB) return json({ ok: true }); // sin base conectada no se mide
+  const s = cuerpo.s, lote = cuerpo.e, m = cuerpo.m && typeof cuerpo.m === 'object' ? cuerpo.m : {};
+  if (typeof s !== 'string' || !SESION_OK.test(s) || !Array.isArray(lote) || !lote.length || lote.length > 40) return falla(400, 'datos');
+  const ahora = Date.now(), filas = [];
+  for (const x of lote) {
+    if (!Array.isArray(x) || !TIPOS_EV.has(x[0])) continue;
+    filas.push({
+      ts: Number.isFinite(x[4]) && Math.abs(x[4] - ahora) < 864e5 ? Math.round(x[4]) : ahora,
+      tipo: x[0], paso: limpio(x[1], 40) || null, valor: x[2] == null ? null : limpio(String(x[2]), 80) || null,
+      ms: Number.isInteger(x[3]) && x[3] >= 0 && x[3] < 864e5 ? x[3] : null
+    });
+  }
+  if (!filas.length) return json({ ok: true });
+  await base(env);
+  const ua = request.headers.get('user-agent') || '';
+  const disp = /iPad|Tablet/i.test(ua) ? 'tablet' : /Mobi|Android|iPhone/i.test(ua) ? 'celular' : 'computador';
+  const nav = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /SamsungBrowser/.test(ua) ? 'Samsung' : /CriOS|Chrome\//.test(ua) ? 'Chrome'
+    : /FxiOS|Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Otro';
+  const ultimo = t => { for (let i = filas.length - 1; i >= 0; i--) if (filas[i].tipo === t) return filas[i]; return null; };
+  const hay = t => filas.some(f => f.tipo === t) ? 1 : 0;
+  const avance = ultimo('pantalla'), res = ultimo('resultado');
+  const sesion = env.DB.prepare(`INSERT INTO sesiones (sesion, inicio, ultimo, fuente, pais, dispositivo, navegador, origen, referido, pantalla,
+      avance, empezo, datos, resultado, agendo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
+      ON CONFLICT (sesion) DO UPDATE SET ultimo = MAX(ultimo, excluded.ultimo), avance = COALESCE(excluded.avance, avance),
+      empezo = MAX(empezo, excluded.empezo), datos = MAX(datos, excluded.datos), resultado = COALESCE(excluded.resultado, resultado),
+      agendo = MAX(agendo, excluded.agendo)`)
+    .bind(s, filas[0].ts, filas[filas.length - 1].ts, etiquetaDe(request), request.headers.get('CF-IPCountry') || null, disp, nav,
+      limpio(m.o, 200) || null, limpio(m.r, 80) || null, limpio(m.w, 20) || null, avance ? avance.paso : null,
+      hay('empezar'), hay('datos'), res ? res.valor : null, hay('agendado'));
+  const ins = env.DB.prepare('INSERT INTO eventos (sesion, ts, tipo, paso, valor, ms_paso) VALUES (?1, ?2, ?3, ?4, ?5, ?6)');
+  await env.DB.batch([sesion, ...filas.map(f => ins.bind(s, f.ts, f.tipo, f.paso, f.valor, f.ms))]);
+  return json({ ok: true });
+}
+
+/* ---------- POST /api/panel ---------- */
+// La clave se compara por su huella, en tiempo constante
+async function claveOk(dada, real) {
+  if (typeof dada !== 'string' || !dada || dada.length > 200 || !real) return false;
+  const h = async t => new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)));
+  const [a, b] = await Promise.all([h(dada), h(real)]);
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a[i] ^ b[i];
+  return d === 0;
+}
+async function panel(request, env, cuerpo) {
+  if (!env.DB || !env.PANEL_KEY) return falla(503, 'config');
+  if (!await claveOk(cuerpo.clave, env.PANEL_KEY)) return falla(401, 'clave');
+  await base(env);
+  const dias = [1, 7, 30, 3650].includes(cuerpo.dias) ? cuerpo.dias : 7;
+  const desde = Date.now() - dias * 864e5;
+  const fuente = typeof cuerpo.fuente === 'string' && /^form[a-z-]{0,20}$/.test(cuerpo.fuente) ? cuerpo.fuente : null;
+  const F = fuente ? ' AND s.fuente = ?2' : '';
+  const q = sql => env.DB.prepare(sql).bind(...(fuente ? [desde, fuente] : [desde]));
+  const deS = 'FROM sesiones s WHERE s.inicio >= ?1' + F;
+  const deE = 'FROM eventos e JOIN sesiones s ON s.sesion = e.sesion WHERE s.inicio >= ?1' + F;
+  const r = await env.DB.batch([
+    q(`SELECT COUNT(*) visitas, SUM(s.empezo) empezaron, SUM(s.datos) datos, SUM(CASE WHEN s.resultado IN ('b1','b2','b3') THEN 1 ELSE 0 END) calificados,
+       SUM(s.agendo) agendaron ${deS}`),
+    q(`SELECT e.paso, COUNT(DISTINCT e.sesion) n ${deE} AND e.tipo = 'pantalla' GROUP BY e.paso`),
+    q(`SELECT e.valor paso, e.ms_paso ms ${deE} AND e.tipo = 'pantalla' AND e.valor IS NOT NULL AND e.ms_paso IS NOT NULL`),
+    q(`SELECT e.paso, e.valor, COUNT(DISTINCT e.sesion) n ${deE} AND e.tipo = 'respuesta' GROUP BY e.paso, e.valor ORDER BY e.paso, n DESC`),
+    q(`SELECT e.paso, e.valor, COUNT(*) n ${deE} AND e.tipo = 'error' GROUP BY e.paso, e.valor ORDER BY n DESC LIMIT 30`),
+    q(`SELECT e.paso, e.valor, COUNT(*) n ${deE} AND e.tipo = 'clic_vacio' GROUP BY e.paso, e.valor ORDER BY n DESC LIMIT 30`),
+    q(`SELECT s.avance, COUNT(*) n ${deS} AND s.resultado IS NULL GROUP BY s.avance ORDER BY n DESC`),
+    q(`SELECT s.resultado, COUNT(*) n ${deS} AND s.resultado IS NOT NULL GROUP BY s.resultado ORDER BY n DESC`),
+    env.DB.prepare(`SELECT s.fuente, COUNT(*) visitas, SUM(s.datos) datos, SUM(s.agendo) agendaron FROM sesiones s WHERE s.inicio >= ?1
+       GROUP BY s.fuente ORDER BY visitas DESC`).bind(desde),
+    q(`SELECT s.dispositivo, COUNT(*) n ${deS} GROUP BY s.dispositivo ORDER BY n DESC`),
+    q(`SELECT s.pais, COUNT(*) n ${deS} GROUP BY s.pais ORDER BY n DESC LIMIT 15`),
+    q(`SELECT s.* ${deS} ORDER BY s.inicio DESC LIMIT 60`)
+  ]);
+  const filas = i => r[i].results || [];
+  const personas = filas(11);
+  let recorridos = [];
+  if (personas.length) {
+    const marcas = personas.map((_, i) => '?' + (i + 1)).join(',');
+    recorridos = (await env.DB.prepare(`SELECT sesion, ts, tipo, paso, valor, ms_paso FROM eventos WHERE sesion IN (${marcas}) ORDER BY ts`)
+      .bind(...personas.map(p => p.sesion)).all()).results || [];
+  }
+  return json({
+    ok: true, dias, fuente, totales: filas(0)[0] || {}, pantallas: filas(1), tiempos: filas(2), respuestas: filas(3), errores: filas(4),
+    clics: filas(5), salidas: filas(6), resultados: filas(7), fuentes: filas(8), dispositivos: filas(9), paises: filas(10), personas, recorridos,
+    ghl: 'https://app.gohighlevel.com/v2/location/' + LOC + '/contacts/detail/'
+  });
+}
+
 /* ---------- POST /api/lead ---------- */
 async function lead(request, env, cuerpo) {
   const r = leerRespuestas(cuerpo.respuestas), c = leerContacto(cuerpo.contacto);
@@ -277,6 +387,12 @@ async function lead(request, env, cuerpo) {
   }
   if (!ct) return falla(502, 'ghl');
   const cid = ct.id;
+  // La visita queda unida al contacto, para ver en el panel el recorrido de cada lead
+  if (env.DB && typeof cuerpo.s === 'string' && SESION_OK.test(cuerpo.s)) {
+    await base(env).then(() => env.DB.prepare(`INSERT INTO sesiones (sesion, inicio, fuente, contacto, datos) VALUES (?1, ?2, ?3, ?4, 1)
+      ON CONFLICT (sesion) DO UPDATE SET contacto = excluded.contacto, datos = 1`).bind(cuerpo.s, Date.now(), etiqueta, cid).run())
+      .catch(e => console.log('visita', e.message));
+  }
   // 2. Notas con todas las respuestas
   const tareas = [ghl(env, '/contacts/' + cid + '/notes', { method: 'POST', body: { body: notaRespuestas(r, c, etiqueta, origen, tier) } })];
   if (!nuevo) {
@@ -375,6 +491,14 @@ export async function onRequest({ request, env, params }) {
     if (ruta === 'lead') {
       if (demasiados(ip, 'l', 30, 10 * 60e3)) return falla(429, 'espera');
       return await lead(request, env, cuerpo);
+    }
+    if (ruta === 'evento') {
+      if (demasiados(ip, 'e', 3000, 10 * 60e3)) return falla(429, 'espera');
+      return await evento(request, env, cuerpo);
+    }
+    if (ruta === 'panel') {
+      if (demasiados(ip, 'p', 30, 10 * 60e3)) return falla(429, 'espera');
+      return await panel(request, env, cuerpo);
     }
     if (ruta === 'agendar') {
       if (demasiados(ip, 'a', 40, 10 * 60e3)) return falla(429, 'espera');

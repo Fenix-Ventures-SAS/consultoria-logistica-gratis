@@ -10,6 +10,9 @@ Formulario de calificación de Fénix Ventures, la vertical logística de Dropi.
 
 - `index.html` (estructura y estilos) y `app.js` (preguntas, lógica y agenda) son todo el código, sin librerías externas.
 - Pensada para cargar rápido: la portada baja unos 63 KB en total, con letras recortadas en WOFF2 e imágenes en WebP. Los íconos de las preguntas se precargan en segundo plano.
+- **Medición del recorrido:** la página manda a `/api/evento` cada pantalla, respuesta, aviso de error, toque fuera de botón y salida, sin datos personales. Todo queda en la base D1 `fenix-formulario-visitas` (enlace `DB`), y cada visita se une al contacto de GHL cuando deja sus datos.
+- **Panel privado:** `/panel` muestra el embudo, dónde se va la gente, las respuestas, los tiempos y el recorrido de cada persona. Pide la clave `PANEL_KEY` guardada en Cloudflare.
+- **Anti-robots:** Turnstile de Cloudflare, en modo "managed" con `interaction-only`, así casi nadie lo ve. Se exige en cuanto exista `TURNSTILE_SECRET`.
 - No hay claves en este repositorio.
 
 ## Créditos
