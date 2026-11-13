@@ -48,6 +48,7 @@ function describir(e) {
     case 'error': return 'Vio el aviso: <b>' + esc(v) + '</b>';
     case 'resultado': return 'Resultado: <b>' + esc(RES[v] || v) + '</b>';
     case 'datos': return 'Envió sus datos (celular de ' + esc(v || '—') + ')';
+    case 'parcial': return '<b>Sus datos quedaron en GHL sin tocar el botón</b> (celular de ' + esc(v || '—') + ')';
     case 'guardado': return v === 'ok' ? 'Quedó guardado en GHL' : '<b>No se guardó en GHL</b> (' + esc(v) + ')';
     case 'agenda': return 'Vio la agenda (' + esc(v) + ')';
     case 'horario': return 'Tocó un horario: <b>' + esc(v) + '</b>';

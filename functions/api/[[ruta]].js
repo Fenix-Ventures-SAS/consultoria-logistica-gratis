@@ -206,13 +206,14 @@ function horaLocal(ms, tz, pais) {
   const h = +p.hour, h12 = h % 12 || 12;
   return DIA[d.getUTCDay()] + ', ' + (+p.day) + ' de ' + MES[d.getUTCMonth()] + (h12 === 1 ? ' a la ' : ' a las ') + h12 + ':' + p.minute + (h < 12 ? ' am' : ' pm') + ' (Hora de ' + pais + ')';
 }
-function notaRespuestas(r, c, etiqueta, origen, tier) {
+function notaRespuestas(r, c, etiqueta, origen, tier, parcial) {
   const lista = (k, v) => [].concat(v).map(x => OPC[k][x]).join(', ');
   const fuente = FUENTES[etiqueta.replace(/^form/, '')] || 'General';
   const filas = [
     '📝 FORMULARIO WEB · Consultoría Logística Gratis',
     'Entró por: ' + etiqueta + '.fenixventures.co (' + fuente + ')',
-    'Resultado: ' + (r.seguimiento ? 'SEGUIMIENTO (vende menos de 20 al día y ya tiene chatbot; no se le ofreció agenda)' : tier + ' · se le mostró la agenda'),
+    'Resultado: ' + (r.seguimiento ? 'SEGUIMIENTO (vende menos de 20 al día y ya tiene chatbot; no se le ofreció agenda)' : tier + (parcial ? '' : ' · se le mostró la agenda')),
+    ...(parcial ? ['⚠️ DEJÓ SUS DATOS PERO NO TOCÓ «' + (r.seguimiento ? 'Enviar' : 'Ver horarios') + '»: hay que escribirle o llamarlo.'] : []),
     '',
     'Nombre: ' + c.nombre,
     'WhatsApp: ' + c.tel + ' (' + c.pais + ')',
@@ -264,7 +265,7 @@ async function base(env) {
 }
 const SESION_OK = /^[a-z0-9]{8,32}$/;
 const TIPOS_EV = new Set(['pantalla', 'empezar', 'respuesta', 'desliza', 'atras', 'error', 'resultado', 'datos', 'guardado', 'agenda', 'horario',
-  'otro', 'texto', 'respaldo', 'agendado', 'ocupado', 'agenda_error', 'reintentar', 'reinicio', 'clic_vacio', 'salida', 'volver']);
+  'otro', 'texto', 'respaldo', 'agendado', 'ocupado', 'agenda_error', 'reintentar', 'reinicio', 'clic_vacio', 'salida', 'volver', 'parcial']);
 
 /* ---------- POST /api/evento ---------- */
 async function evento(request, env, cuerpo) {
@@ -364,7 +365,9 @@ async function lead(request, env, cuerpo) {
   const tier = tierDe(r.ventas);
 
   // La agenda se busca al mismo tiempo que se guarda el contacto
-  const agenda = r.seguimiento ? null : libres(env, tier, Date.now(), Date.now() + 5 * 86400e3).then(x => armarHorarios(tier, x)).catch(() => null);
+  const parcial = cuerpo.parcial === true;
+  const notaPrevia = typeof cuerpo.nota === 'string' && /^[A-Za-z0-9]{8,40}$/.test(cuerpo.nota) ? cuerpo.nota : null;
+  const agenda = r.seguimiento || parcial ? null : libres(env, tier, Date.now(), Date.now() + 5 * 86400e3).then(x => armarHorarios(tier, x)).catch(() => null);
   // 1. Contacto: se busca por WhatsApp. Si no existe, se crea completo y con su etiqueta en un solo paso (así cualquier
   //    flujo de GHL que arranque al crearlo ya lo ve con nombre). Si existe, no se crea otro ni se le pisan datos:
   //    solo se llena lo vacío y se le suma la etiqueta.
@@ -393,8 +396,12 @@ async function lead(request, env, cuerpo) {
       ON CONFLICT (sesion) DO UPDATE SET contacto = excluded.contacto, datos = 1`).bind(cuerpo.s, Date.now(), etiqueta, cid).run())
       .catch(e => console.log('visita', e.message));
   }
-  // 2. Notas con todas las respuestas
-  const tareas = [ghl(env, '/contacts/' + cid + '/notes', { method: 'POST', body: { body: notaRespuestas(r, c, etiqueta, origen, tier) } })];
+  // 2. Nota con todas las respuestas. Si antes se guardó sola (salió sin tocar el botón), se completa esa misma nota
+  const texto = notaRespuestas(r, c, etiqueta, origen, tier, parcial);
+  const crearNota = () => ghl(env, '/contacts/' + cid + '/notes', { method: 'POST', body: { body: texto } });
+  const tareas = [notaPrevia && !parcial
+    ? ghl(env, '/contacts/' + cid + '/notes/' + notaPrevia, { method: 'PUT', body: { body: texto } }).then(x => x.ok ? x : crearNota())
+    : crearNota()];
   if (!nuevo) {
     // 3. Contacto que ya existía: etiqueta del subdominio (se suma a las que tenga) y solo lo vacío
     tareas.push(ghl(env, '/contacts/' + cid + '/tags', { method: 'POST', body: { tags: [etiqueta] } }));
@@ -421,6 +428,7 @@ async function lead(request, env, cuerpo) {
   const hechos = await Promise.all(tareas);
   hechos.forEach(h => { if (!h.ok) console.log('aviso GHL', h.status); });
 
+  if (parcial) return json({ ok: true, parcial: true, nota: hechos[0].data && hechos[0].data.note ? hechos[0].data.note.id : null });
   if (r.seguimiento) return json({ ok: true, seguimiento: true });
   const token = await firmar(env, { c: cid, o: oid, t: tier, n: partes[0], tz: c.tz, p: c.pais, exp: Date.now() + 3 * 3600e3 });
   return json({ ok: true, tier, token, agenda: await agenda });

@@ -17,7 +17,6 @@
 @font-face{font-family:"Figtree";src:url("fonts/figtree.woff2") format("woff2");font-weight:400 600;font-style:normal;font-display:swap}
 /* Íconos: Twemoji (https://github.com/jdecked/twemoji), licencia CC-BY 4.0 */
 @font-face{font-family:"Museo 700";src:url("fonts/museo-700.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
-/* Layout: banda corporativa con logos y filete dorado; banco de prueba en dos columnas (formulario de marca a la izquierda, lectura del sistema a la derecha); rutas agrupadas por resultado en una lista con filas. */
 :root{
   --bg:#f4f6f4; --surface:#ffffff; --surface-2:#f1f7f3; --ink:#0f2a1b; --tx:#1f2a23; --mut:#5f6e64; --soft:#8a978e; --line:#e3e8e4;
   --green:#0b6b3a; --green-deep:#075a30; --green-tint:#f1f7f3; --green-line:#cfe3d6; --gold:#f5c21b; --gold-deep:#8d6208; --gold-tint:#fbf3e1; --word:#0b6b3a;
@@ -35,15 +34,8 @@
   --bg:#0e1612; --surface:#141f19; --surface-2:#192820; --ink:#eef4f0; --tx:#dbe4de; --mut:#9aaba1; --soft:#76877d; --line:#24342b;
   --green:#68c392; --green-deep:#8fd5ae; --green-tint:#17291f; --green-line:#284434; --gold:#f5c21b; --gold-deep:#f5c21b; --gold-tint:#2e2610; --word:#f5c21b;
   --warn:#f0bf5f; --warn-tint:#2e2610; --no:#f19a92; --no-tint:#341d1b; color-scheme:dark}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .logo-light{display:none}:root:not([data-theme="light"]) .logo-dark{display:inline}}
-:root[data-theme="dark"] .logo-light{display:none}
-:root[data-theme="dark"] .logo-dark{display:inline}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
-.in{max-width:1140px;margin:0 auto}
-h1,h2,h3{font-family:var(--display);font-weight:700;color:var(--ink);margin:0;text-wrap:balance;letter-spacing:-.005em}
-.meta{font-size:12.5px;color:var(--mut);text-align:right;line-height:1.4}
-h1{font-size:clamp(28px,4vw,40px);line-height:1.1}
 /* Opción oscura del formulario: fondo en el verde del logo, letras claras y acentos dorados */
 .fcard.osc{--f-page:#085530;--f-bg:#085530;--f-ink:#ffffff;--f-tx:#eef6f1;--f-mut:#c4e0d0;--f-line:rgba(255,255,255,.22);--f-green:#f5c21b;--f-tint:rgba(255,255,255,.09);--f-gline:rgba(255,255,255,.32);--f-gold:#f5c21b;--f-gold-deep:#f5c21b;--f-chip:rgba(255,255,255,.16);border-color:#085530;box-shadow:0 1px 2px rgba(6,40,22,.2),0 16px 36px rgba(6,40,22,.28)}
 .fcard.osc .fhead .fword{color:#fff}
@@ -57,12 +49,12 @@ h1{font-size:clamp(28px,4vw,40px);line-height:1.1}
 .fcard.osc .fbody.flood{background:#085530}
 .fcard.osc .sld input[type=range]{accent-color:#f5c21b}
 .fcard.osc .calw{--f-tx:#1f2a23;--f-mut:#5f6e64;--f-line:#dde4df;--f-bg:#fff;background:#fff;color:#1f2a23}
-.fcard.osc img[src*="tiktok"],.fcard.osc img[src$="2795.svg"]{filter:invert(1)}
+.fcard.osc img[src*="tiktok"]{filter:invert(1)}
 .fcard{width:100%;max-width:400px;background:var(--f-page);transition:background-color .35s ease;color:var(--f-tx);border:1px solid var(--f-line);border-radius:18px;overflow:hidden;box-shadow:0 1px 2px rgba(15,42,27,.06),0 14px 34px rgba(15,42,27,.10);display:flex;flex-direction:column;min-height:590px}
-.fhead{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--f-line)}
+.fhead{display:flex;align-items:center;justify-content:center;gap:14px;padding:16px 16px;border-bottom:1px solid var(--f-line)}
 .fhead .fword{font-family:var(--display);font-weight:700;font-size:21px;line-height:1;color:#0b6b3a;white-space:nowrap}
-.fhead .partner{display:flex;align-items:center;gap:8px;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--f-mut);text-align:left;line-height:1.25}
-.fhead .partner img{height:17px;width:auto}
+.fhead .partner{display:flex;align-items:center;gap:10px;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--f-mut);text-align:left;line-height:1.25}
+.fhead .partner img{height:27px;width:auto}
 .fprog{height:3px;background:var(--f-chip)}
 .fprog i{display:block;height:100%;width:0;background:var(--f-gold);transition:width .3s ease}
 .fbody{flex:1;display:flex;flex-direction:column;padding:26px 24px 22px}
@@ -84,33 +76,31 @@ h1{font-size:clamp(28px,4vw,40px);line-height:1.1}
 .cover .emb img{width:var(--emb,86px);height:auto}
 .cover .cend{flex:.55}
 .cover .fq{font-size:25px}
-.trust{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--f-mut);margin:14px 0 0}
-.trust svg{width:18px;height:18px;color:var(--f-gold-deep);flex:none}
-.trust img{height:15px;width:auto;margin-left:2px}
+.trust{display:flex;align-items:center;justify-content:center;gap:12px;font-size:25px;line-height:1.1;color:var(--f-mut);margin:22px 0 0}
+.trust svg{width:36px;height:36px;color:var(--f-gold-deep);flex:none}
+.trust img{height:30px;width:auto;margin-left:2px}
 .result{margin:auto 0;text-align:center}
 .badge-ico{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;margin:0 auto 16px}
 .badge-ico svg{width:26px;height:26px}
 .msg-logo{display:block;width:72px;height:72px;margin:0 auto 18px}
+/* Logo de Dropi que guiña el ojo: alterna con la versión del ojo cerrado mientras la cabeza se inclina un poco */
+.guino{position:relative;display:block;width:100%;height:100%}
+.guino img{display:block;width:100%;height:100%}
+.guino img+img{position:absolute;inset:0;opacity:0}
+@media (prefers-reduced-motion:no-preference){.guino{animation:inclina 3.6s ease-in-out infinite}.guino img+img{animation:guino 3.6s step-end infinite}}
+@keyframes guino{0%{opacity:0}62%{opacity:1}72%{opacity:0}}
+@keyframes inclina{0%,54%,80%,100%{transform:rotate(0)}62%,72%{transform:rotate(-7deg)}}
 .result .fq{font-size:22px}
 .result p.msg{font-size:14.5px;line-height:1.65;color:var(--f-mut);margin:0 auto 22px;max-width:34ch}
-@keyframes sp{to{transform:rotate(360deg)}}
-.score{font-family:var(--display);font-size:30px;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
-.ans{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:13.5px}
-.ans li{display:grid;grid-template-columns:minmax(0,8.5em) minmax(0,1fr);gap:10px}
-.ans span{color:var(--soft)}
-.note{display:flex;gap:10px;margin:16px 0 0;font-size:13px;color:var(--mut);background:var(--surface-2);border-radius:12px;padding:12px 14px}
-.note svg{width:18px;height:18px;flex:none;color:var(--gold-deep);margin-top:1px}
-code{font-family:var(--mono);font-size:.92em}
-.list{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-@media (max-width:560px){.meta{display:none}}
 .fcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
 .fcards .fc:last-child:nth-child(odd){grid-column:1/-1}
-.fc{display:flex;flex-direction:column;align-items:flex-start;gap:9px;text-align:left;font:inherit;font-size:13.5px;line-height:1.3;color:var(--f-tx);background:var(--f-bg);border:1px solid var(--f-line);border-radius:12px;padding:12px;min-height:82px;cursor:pointer;transition:border-color .15s,background .15s,transform .1s}
+.fc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;font:inherit;font-size:13.5px;line-height:1.3;color:var(--f-tx);background:var(--f-bg);border:1px solid var(--f-line);border-radius:12px;padding:12px;min-height:82px;cursor:pointer;transition:border-color .15s,background .15s,transform .1s}
 .fc:hover{border-color:var(--f-green)}
 .fc:active{transform:scale(.98)}
 .fc:focus-visible{outline:2px solid var(--f-gold);outline-offset:2px}
-.fc .ic{width:30px;height:30px;display:grid;place-items:center;font-size:24px;line-height:1}
-.fc .ic.lt{font-family:var(--display);font-size:12.5px;color:var(--f-green);letter-spacing:.02em}
+.fc .ic{width:30px;height:30px;display:grid;place-items:center;line-height:1}
+.fc .ic.sv{color:var(--f-green)}
+.fc .ic.sv svg{width:28px;height:28px}
 .fc.sel{border-color:var(--f-green);background:var(--f-tint);box-shadow:inset 0 0 0 1px var(--f-green)}
 .grp{margin-bottom:16px}
 .fq.sm{font-size:17px;margin-bottom:4px}
@@ -133,7 +123,8 @@ code{font-family:var(--mono);font-size:.92em}
 .vsm{display:flex;flex-direction:column;align-items:center;gap:6px}
 .vsm small{font-size:11.5px;color:#d9eee2;letter-spacing:.04em}
 .vsc{width:58px;height:58px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:26px}
-.vsc.em img{width:58px;height:58px}
+.vsc.em img,.vsc.dr .guino{width:58px;height:58px}
+.vsfin{display:flex;justify-content:center;padding-top:18px}
 .vsp{font-family:var(--display);font-size:24px;color:#f5c21b;min-width:3.2ch;text-align:center;font-variant-numeric:tabular-nums}
 .vss{font-size:12.5px;color:#d9eee2;margin:0 0 10px}
 .vsbar{height:4px;background:rgba(255,255,255,.25);border-radius:2px;overflow:hidden;margin:0 auto 18px;max-width:220px}
@@ -186,7 +177,8 @@ main{display:flex;justify-content:center;width:100%}
 @media (max-width:540px){body{padding:0;gap:0;justify-content:flex-start;align-items:stretch;background:var(--f-page)}main{flex:1;display:flex}.fcard{max-width:none;width:100%;min-height:0;flex:1;border:0;border-radius:0;box-shadow:none}}
 /* Celulares angostos (320-370 px): el encabezado no se parte */
 .fhead .partner>span{white-space:nowrap}
-@media (max-width:370px){.fhead{gap:8px;padding:14px 12px}.fhead .fword{font-size:17.5px}.fhead .partner{font-size:8.5px;gap:6px}.fhead .partner img{height:14px}.fbody{padding:22px 16px 18px}}
+@media (max-width:389px){.fhead{gap:10px;padding:14px 10px}.fhead .fword{font-size:19px}.fhead .partner{font-size:8.5px;gap:7px}.fhead .partner img{height:24px}}
+@media (max-width:350px){.fhead{gap:8px}.fhead .fword{font-size:16.5px}.fhead .partner{font-size:7.5px;gap:6px}.fhead .partner img{height:21px}.fbody{padding:22px 16px 18px}.trust{font-size:21px;gap:9px}.trust svg{width:30px;height:30px}.trust img{height:26px}}
 </style>
 </head>
 <body>
