@@ -370,6 +370,7 @@ export async function onRequest({ request, env, params }) {
   if (texto.length > 6000) return falla(413, 'tamano');
   let cuerpo;
   try { cuerpo = JSON.parse(texto); } catch { return falla(400, 'json'); }
+  if (!cuerpo || typeof cuerpo !== 'object' || Array.isArray(cuerpo)) return falla(400, 'datos');
   try {
     if (ruta === 'lead') {
       if (demasiados(ip, 'l', 30, 10 * 60e3)) return falla(429, 'espera');
