@@ -232,11 +232,16 @@ function start(){clearT();hist=[];AG=null;cur=nextScr(-1,{ventas:1});render();
 function advance(){hist.push(cur);const n=nextScr(cur);if(n<0){fin=outcome()}else cur=n;render()}
 function pick(k,v){setAns(k,v);const s=STEPS.find(x=>x.k===k);if(s.end&&s.end.includes(v)){hist.push(cur);fin=outcome();render();return}advance()}
 function back(){clearT();fin=null;AG=null;cur=hist.length?hist.pop():-1;render()}
+// Dígitos exactos del celular, sin indicativo ni 0 inicial. Los 8 países de Fénix los traen en PAISES; estos son los demás mercados.
+// Territorios del Caribe con indicativo +1xxx: 7 dígitos. Países que no estén aquí: revisión general de largo.
+const LARGO={PE:[9],VE:[10],BO:[8],UY:[8],BR:[10,11],CR:[8],SV:[8],HN:[8],NI:[8],DO:[10],CU:[8],PR:[10],US:[10],CA:[10],ES:[9],PT:[9],IT:[9,10],FR:[9],DE:[10,11],GB:[10],HT:[8],BZ:[7],GY:[7],SR:[7]};
+const largos=p=>p[5]?[p[5]]:LARGO[p[3]]||(p[0].length===4&&p[0][0]==='1'?[7]:null);
 function send(){const n=$('fn').value.trim(),iso=$('cc').value,p=iso?paisBy(iso):null,e=$('em')?$('em').value.trim():'';let t=$('ph').value.replace(/\D/g,'');let m='';
-  if(p){if(t.startsWith(p[0])&&t.length>(p[5]||10))t=t.slice(p[0].length);t=t.replace(/^0+/,'')}
+  const L=p?largos(p):null;
+  if(p){if(t.startsWith(p[0])&&t.length>(L?Math.max(...L):10))t=t.slice(p[0].length);t=t.replace(/^0+/,'')}
   if(!n)m='Escribe tu nombre para continuar.';else if(!p)m='Elige el país de tu celular para continuar.';
-  else if(p[5]&&t.length!==p[5]&&!(p[3]==='AR'&&t.length===11&&t[0]==='9'))m='Revisa el número: en '+p[2]+' el celular tiene '+p[5]+' dígitos, sin el +'+p[0]+'.';
-  else if(!p[5]&&(t.length<6||t.length>14))m='Revisa el número: parece incompleto.';
+  else if(L&&!L.includes(t.length)&&!(p[3]==='AR'&&t.length===11&&t[0]==='9'))m='Revisa el número: en '+p[2]+' el celular tiene '+L.join(' u ')+' dígitos, sin el +'+p[0]+'.';
+  else if(!L&&(t.length<6||t.length>14))m='Revisa el número: parece incompleto.';
   else if($('em')&&!e)m='Escribe tu correo para continuar.';
   else if(e&&!/^\S+@\S+\.\S+$/.test(e))m='Revisa el correo: parece incompleto.';
   if(m){$('er').textContent=m;return}
