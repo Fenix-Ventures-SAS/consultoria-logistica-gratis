@@ -7,6 +7,8 @@
    Agenda con las reglas de Sofía (flujos KAd4A y knRiI): consultor por ventas diarias, 36 h sin domingos ni
    festivos, mínimo 90 min de anticipación, a la misma hora desempata el orden de prioridad. */
 
+import { FUENTES, NOMBRE_NUEVO } from '../index.js';
+
 const GHL = 'https://services.leadconnectorhq.com';
 const LOC = '04Ruck2fFcV5VVehGEaY';
 const CAL = {
@@ -36,7 +38,6 @@ const OPC = {
   socios: { solo: 'Decide solo', socios: 'Con socio(s) o pareja' }
 };
 const MULTI = new Set(['plataforma', 'pauta', 'problema']);
-const FUENTES = { pmeta: 'Pauta Meta', ptiktok: 'Pauta TikTok', pgoogle: 'Pauta Google', ig: 'Orgánico Instagram', tkt: 'Orgánico TikTok', lkd: 'LinkedIn', dropi: 'Referidos Dropi', ref: 'Referidos', evon: 'Eventos online', evfis: 'Eventos físicos' };
 
 /* ---------- utilidades ---------- */
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
@@ -194,8 +195,9 @@ function leerContacto(c) {
 }
 function etiquetaDe(request) {
   const host = new URL(request.url).hostname;
-  const m = host.match(/^(form[a-z]*)\.fenixventures\.co$/);
-  return m ? m[1] : 'form-pruebas';
+  const m = host.match(/^(form[a-z-]*)\.fenixventures\.co$/);
+  if (!m) return 'form-pruebas';
+  return NOMBRE_NUEVO[m[1]] || m[1];
 }
 
 /* ---------- notas ---------- */
@@ -209,7 +211,7 @@ function horaLocal(ms, tz, pais) {
 }
 function notaRespuestas(r, c, etiqueta, origen, tier, parcial) {
   const lista = (k, v) => [].concat(v).map(x => OPC[k][x]).join(', ');
-  const fuente = FUENTES[etiqueta.replace(/^form/, '')] || 'General';
+  const fuente = FUENTES[etiqueta] || 'Pruebas';
   const filas = [
     '📝 FORMULARIO WEB · Consultoría Logística Gratis',
     'Entró por: ' + etiqueta + '.fenixventures.co (' + fuente + ')',
@@ -246,7 +248,7 @@ async function esPersona(env, token, ip) {
   } catch { return false; }
 }
 // Solo se atiende desde las direcciones oficiales (no desde copias viejas de la página)
-const HOST_OK = /^(form[a-z]*\.fenixventures\.co|consultoria-logistica-gratis\.pages\.dev)$/;
+const HOST_OK = /^(form(-[a-z]+)*\.fenixventures\.co|form[a-z]+\.fenixventures\.co|consultoria-logistica-gratis\.pages\.dev)$/;
 
 /* ---------- Base de visitas (D1) ---------- */
 // Las tablas se crean solas la primera vez; así el esquema vive en este archivo
