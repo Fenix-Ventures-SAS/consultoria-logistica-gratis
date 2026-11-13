@@ -5,10 +5,11 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&am
 const num = n => Number(n || 0).toLocaleString('es-CO');
 const pct = (a, b) => b ? Math.round(a * 100 / b) + ' %' : '—';
 
-const PASOS = ['portada', 'ventas', 'plataforma', 'canal', 'pauta', 'pago', 'vas_bien', 'operacion', 'problema', 'socios', 'contacto', 'revisando', 'agenda'];
+const PASOS = ['portada', 'ventas', 'plataforma', 'canal', 'pauta', 'pago', 'vas_bien', 'operacion', 'confirma', 'problema', 'socios', 'contacto', 'revisando', 'agenda'];
 const NOMBRE = { portada: 'Portada', ventas: 'Ventas diarias', plataforma: 'Plataformas', canal: 'Canal de pedidos', pauta: 'Pauta', pago: 'Forma de pago',
   vas_bien: '¡Pasaste el primer filtro!', operacion: 'Operación', problema: 'Problemas', socios: 'Socios', contacto: 'Datos de contacto',
-  revisando: 'Análisis', agenda: 'Agenda', plataforma_otra: 'Otra plataforma', chatbot: 'Cómo responde', chatbot_b3: 'Cómo responde', confirma: 'Quién confirma' };
+  revisando: 'Análisis', agenda: 'Agenda', plataforma_otra: 'Otra plataforma', chatbot: 'Cómo responde', chatbot_b3: 'Cómo responde', confirma: 'Quién confirma',
+  chatbot_cual: 'Cuál chatbot', chatbot_otro: 'Otro chatbot', socio_nombre: 'Nombre del socio', socio_correo: 'Correo del socio', invitado_correo: 'Correo de invitado' };
 const RES = { no_vende: 'No vende', descartado_plataforma: 'Descartado: sin plataforma', descartado_canal: 'Descartado: canal', descartado_pauta: 'Descartado: no pauta',
   descartado_pago: 'Descartado: pago anticipado', seguimiento: 'Seguimiento (chatbot, menos de 20)', b1: 'B1 · 70 o más ventas', b2: 'B2 · 20 a 69', b3: 'B3 · 1 a 19' };
 const OPC = { dropi: 'Dropi', effi: 'Effi', hoko: 'Hoko', mastershop: 'MasterShop', otra: 'Otra', transportadora: 'Transportadora', ninguna: 'Ninguna',
@@ -16,7 +17,10 @@ const OPC = { dropi: 'Dropi', effi: 'Effi', hoko: 'Hoko', mastershop: 'MasterSho
   meta: 'Meta', tiktok: 'TikTok', google: 'Google', no: 'No pauta', contraentrega: 'Contraentrega', ambos: 'Contraentrega y anticipado', anticipado: 'Solo anticipado',
   manual: 'A mano', chatbot: 'Chatbot', yo: 'Él mismo', socio: 'Socio', empleados: 'Empleados', tercero: 'Empresa externa', bot: 'Un bot',
   devoluciones: 'Devoluciones', confirmaciones: 'Confirmar pedidos', novedades: 'Novedades', atencion: 'No da abasto con chats', tiempo: 'Falta tiempo',
-  ventas_bajaron: 'Ventas bajaron', escalar: 'Quiere escalar', solo: 'Decide solo', socios: 'Con socios' };
+  ventas_bajaron: 'Ventas bajaron', escalar: 'Quiere escalar', solo: 'Decide solo', socios: 'Con socios',
+  chateapro: 'Chatea Pro', lucidbot: 'LucidBot', lilibot: 'LiliBot', pancake: 'Pancake', sellerchat: 'SellerChat', icomfly: 'Icomfly', otro: 'Otro', lleno: 'Lo escribió' };
+// Respuestas escritas a mano (no son opciones): se muestran tal cual
+const TEXTO = new Set(['plataforma_otra', 'chatbot_otro']);
 const nombrePaso = p => NOMBRE[p] || (p && p.startsWith('fin_') ? 'Fin · ' + (RES[p.slice(4)] || p.slice(4)) : p || '—');
 const opcion = v => String(v || '').split('+').map(x => OPC[x] || x).join(' + ');
 const rango = v => { v = +v; return v === 0 ? '0' : v <= 10 ? '1 a 10' : v <= 19 ? '11 a 19' : v <= 30 ? '20 a 30' : v <= 69 ? '31 a 69' : v <= 99 ? '70 a 99' : v <= 299 ? '100 a 299' : '300 o más'; };
@@ -42,7 +46,7 @@ function describir(e) {
   switch (e.tipo) {
     case 'pantalla': return 'Entró a <b>' + esc(nombrePaso(e.paso)) + '</b>' + (e.valor ? ' <span style="color:var(--mut)">(' + dur(e.ms_paso) + ' en ' + esc(nombrePaso(e.valor)) + ')</span>' : '');
     case 'empezar': return 'Tocó <b>Empezar</b>';
-    case 'respuesta': return 'Respondió ' + esc(nombrePaso(e.paso)) + ': <b>' + esc(e.paso === 'ventas' ? v : e.paso === 'plataforma_otra' ? v : opcion(v)) + '</b>';
+    case 'respuesta': return 'Respondió ' + esc(nombrePaso(e.paso)) + ': <b>' + esc(e.paso === 'ventas' ? v : TEXTO.has(e.paso) ? v : opcion(v)) + '</b>';
     case 'desliza': return 'Movió la barra';
     case 'atras': return 'Tocó <b>Atrás</b> en ' + esc(nombrePaso(e.paso));
     case 'error': return 'Vio el aviso: <b>' + esc(v) + '</b>';
@@ -81,7 +85,7 @@ function dibujar(d) {
   const tiempos = PASOS.filter(p => porPaso[p]).map(p => [nombrePaso(p), dur(med(porPaso[p])), num(porPaso[p].length)]);
   // Respuestas por pregunta (ventas en rangos)
   const preg = {};
-  (d.respuestas || []).forEach(x => { const k = x.paso, nom = k === 'ventas' ? rango(x.valor) : k === 'plataforma_otra' ? x.valor : opcion(x.valor);
+  (d.respuestas || []).forEach(x => { const k = x.paso, nom = k === 'ventas' ? rango(x.valor) : TEXTO.has(k) ? x.valor : opcion(x.valor);
     preg[k] = preg[k] || {}; preg[k][nom] = (preg[k][nom] || 0) + x.n; });
   const ordenVentas = ['0', '1 a 10', '11 a 19', '20 a 30', '31 a 69', '70 a 99', '100 a 299', '300 o más'];
   const respuestas = Object.keys(preg).map(k => '<div class="preg"><h3>' + esc(nombrePaso(k)) + '</h3>' +

@@ -32,6 +32,7 @@ const OPC = {
   pauta: { meta: 'Meta', tiktok: 'TikTok', google: 'Google', no: 'No pauta' },
   pago: { contraentrega: 'Contraentrega', ambos: 'Contraentrega y anticipado', anticipado: 'Solo anticipado' },
   chatbot: { manual: 'A mano (él o su equipo)', chatbot: 'Con chatbot' },
+  chatbot_cual: { chateapro: 'Chatea Pro', lucidbot: 'LucidBot', lilibot: 'LiliBot', pancake: 'Pancake', sellerchat: 'SellerChat', icomfly: 'Icomfly', otro: 'Otro' },
   // «Un bot» salió del formulario el 13-nov-2026; se sigue aceptando por si alguien tenía abierta la versión anterior
   confirma: { yo: 'Él mismo', socio: 'Su socio', empleados: 'Empleados', tercero: 'Empresa externa', bot: 'Un bot' },
   problema: { devoluciones: 'Devoluciones', confirmaciones: 'Confirmar pedidos', novedades: 'Novedades sin resolver', atencion: 'No da abasto con los chats', tiempo: 'Le falta tiempo para crecer', ventas_bajaron: 'Sus ventas bajaron', escalar: 'Ninguno, quiere escalar' },
@@ -170,6 +171,15 @@ function leerRespuestas(a) {
   const ch = a.chatbot_b3 !== undefined ? a.chatbot_b3 : a.chatbot;
   if (ch !== undefined) { if (!Object.hasOwn(OPC.chatbot, ch)) return null; r.chatbot = ch; }
   r.plataforma_otra = limpio(a.plataforma_otra, 60);
+  // Cuál chatbot: solo cuenta si dijo que usa uno
+  if (r.chatbot !== 'chatbot') delete r.chatbot_cual;
+  r.chatbot_otro = r.chatbot_cual === 'otro' ? limpio(a.chatbot_otro, 60) : '';
+  // Opcionales para la reunión: con socio, su nombre y correo; si decide solo, un correo de alguien más a invitar.
+  // Un correo mal escrito se descarta en silencio: nunca hace perder al lead.
+  const correo = v => { const m = limpio(v, 120).toLowerCase(); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m) ? m : ''; };
+  r.socio_nombre = r.socios === 'socios' ? limpio(a.socio_nombre, 80) : '';
+  r.socio_correo = r.socios === 'socios' ? correo(a.socio_correo) : '';
+  r.invitado_correo = r.socios === 'solo' ? correo(a.invitado_correo) : '';
   // Mismo filtro del formulario: si no lo pasa, no debió llegar aquí
   const PLATS = ['dropi', 'effi', 'hoko', 'mastershop', 'otra'];
   if (!(r.plataforma || []).some(x => PLATS.includes(x))) return null;
@@ -229,9 +239,12 @@ function notaRespuestas(r, c, etiqueta, origen, tier, parcial) {
     'Sus clientes pagan: ' + OPC.pago[r.pago]
   ];
   if (r.chatbot) filas.push('Responde los mensajes: ' + OPC.chatbot[r.chatbot]);
+  if (r.chatbot_cual) filas.push('Chatbot que usa: ' + OPC.chatbot_cual[r.chatbot_cual] + (r.chatbot_otro ? ' (' + r.chatbot_otro + ')' : ''));
   if (r.confirma) filas.push('Confirma los pedidos: ' + OPC.confirma[r.confirma]);
   if (r.problema) filas.push('Principales problemas: ' + lista('problema', r.problema));
   if (r.socios) filas.push('Decisiones: ' + OPC.socios[r.socios]);
+  if (r.socio_nombre || r.socio_correo) filas.push('Socio(a) para la reunión: ' + [r.socio_nombre, r.socio_correo].filter(Boolean).join(' · '));
+  if (r.invitado_correo) filas.push('Invitar también a la reunión: ' + r.invitado_correo);
   if (origen) filas.push('', 'Origen del clic: ' + origen);
   return filas.join('\n');
 }
@@ -433,7 +446,8 @@ async function lead(request, env, cuerpo) {
 
   if (parcial) return json({ ok: true, parcial: true, nota: hechos[0].data && hechos[0].data.note ? hechos[0].data.note.id : null });
   if (r.seguimiento) return json({ ok: true, seguimiento: true });
-  const token = await firmar(env, { c: cid, o: oid, t: tier, n: partes[0], tz: c.tz, p: c.pais, exp: Date.now() + 3 * 3600e3 });
+  const invitar = [r.socio_nombre && r.socio_correo ? r.socio_nombre + ' (' + r.socio_correo + ')' : r.socio_correo || (r.socio_nombre ? r.socio_nombre + ' (sin correo)' : ''), r.invitado_correo].filter(Boolean).join(', ');
+  const token = await firmar(env, { c: cid, o: oid, t: tier, n: partes[0], tz: c.tz, p: c.pais, ...(invitar ? { i: invitar } : {}), exp: Date.now() + 3 * 3600e3 });
   return json({ ok: true, tier, token, agenda: await agenda });
 }
 
@@ -475,7 +489,7 @@ async function agendar(request, env, cuerpo) {
   }
   await Promise.all([
     T.o && I ? ghl(env, '/opportunities/' + T.o, { method: 'PUT', body: { pipelineId: I.pipeline, pipelineStageId: I.agendado, status: 'open' } }) : null,
-    ghl(env, '/contacts/' + T.c + '/notes', { method: 'POST', body: { body: '📆 AGENDÓ DESDE EL FORMULARIO WEB\nCon: ' + CAL[cl].nombre + ' (' + T.t + ')\nHora Colombia: ' + horaLocal(ms, 'America/Bogota', 'Colombia') + '\nHora del lead: ' + hora } })
+    ghl(env, '/contacts/' + T.c + '/notes', { method: 'POST', body: { body: '📆 AGENDÓ DESDE EL FORMULARIO WEB\nCon: ' + CAL[cl].nombre + ' (' + T.t + ')\nHora Colombia: ' + horaLocal(ms, 'America/Bogota', 'Colombia') + '\nHora del lead: ' + hora + (T.i ? '\nInvitar también a la reunión: ' + limpio(T.i, 300) + ' (agrégalos a la invitación)' : '') } })
   ]);
   return json({ ok: true, ms, consultor: CAL[cl].nombre });
 }

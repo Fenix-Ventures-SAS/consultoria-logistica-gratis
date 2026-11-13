@@ -83,17 +83,20 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .badge-ico{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;margin:0 auto 16px}
 .badge-ico svg{width:26px;height:26px}
 .msg-logo{display:block;width:72px;height:72px;margin:0 auto 18px}
-/* Logo de Dropi que guiña el ojo: alterna con la versión del ojo cerrado mientras la cabeza se inclina un poco */
-.guino{position:relative;display:block;width:100%;height:100%}
-.guino img{display:block;width:100%;height:100%}
-.guino img+img{position:absolute;inset:0;opacity:0}
-@media (prefers-reduced-motion:no-preference){.guino{animation:inclina 3.6s ease-in-out infinite}.guino img+img{animation:guino 3.6s step-end infinite}}
-@keyframes guino{0%{opacity:0}62%{opacity:1}72%{opacity:0}}
-@keyframes inclina{0%,54%,80%,100%{transform:rotate(0)}62%,72%{transform:rotate(-7deg)}}
+/* Animación oficial de Dropi: la cara en reposo ocupa todo el ancho de la caja (igual que el logo quieto de antes)
+   y el ✓ aparece arriba a la derecha, por fuera de la caja. Medidas sacadas del primer cuadro de la animación. */
+.afirma{position:relative;display:block;width:100%;height:100%}
+.afirma img{position:absolute;max-width:none;width:148.95%;height:auto;left:-10.22%;top:-50.14%}
+/* Preguntas obligatorias */
+.req{color:#a12d25;margin-left:.18em}
 .result .fq{font-size:22px}
 .result p.msg{font-size:14.5px;line-height:1.65;color:var(--f-mut);margin:0 auto 22px;max-width:34ch}
 .fcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
 .fcards .fc:last-child:nth-child(odd){grid-column:1/-1}
+/* Lista de chatbots: 3 columnas para que quepa sin bajar; la última sola ocupa toda la fila */
+.fcards.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.fcards.c3 .fc:last-child:nth-child(odd){grid-column:auto}
+.fcards.c3 .fc:last-child:nth-child(3n+1){grid-column:1/-1}
 .fc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;font:inherit;font-size:13.5px;line-height:1.3;color:var(--f-tx);background:var(--f-bg);border:1px solid var(--f-line);border-radius:12px;padding:12px;min-height:82px;cursor:pointer;transition:border-color .15s,background .15s,transform .1s}
 .fc:hover{border-color:var(--f-green)}
 .fc:active{transform:scale(.98)}
@@ -122,7 +125,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .vsm small{font-size:11.5px;color:#d9eee2;letter-spacing:.04em}
 .vsc{width:58px;height:58px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:26px}
 .vsc.em img{width:58px;height:58px}
-.vsdr{display:block;width:58px;height:58px;margin:30px auto 0}
+.vsdr{display:block;width:58px;height:58px;margin:42px auto 0}
 .vsp{font-family:var(--display);font-size:24px;color:#f5c21b;min-width:3.2ch;text-align:center;font-variant-numeric:tabular-nums}
 .vss{font-size:12.5px;color:#d9eee2;margin:0 0 10px}
 .vsbar{height:4px;background:rgba(255,255,255,.25);border-radius:2px;overflow:hidden;margin:0 auto 18px;max-width:220px}

@@ -22,4 +22,5 @@ Formulario de calificación de Fénix Ventures, la vertical logística de Dropi.
 - Letra Figtree: Erik Kennedy, licencia SIL Open Font License 1.1.
 - Imágenes 3D de las respuestas: [Fluent Emoji](https://github.com/microsoft/fluentui-emoji) de Microsoft, licencia MIT (reducidas a WebP de 120 px; personas y manos en tono de piel medio claro; el apretón de manos, que solo existe en amarillo, se recoloreó a ese mismo tono).
 - Dedito del deslizador: [Twemoji](https://github.com/jdecked/twemoji), licencia CC-BY 4.0.
-- Los logos de Dropi, Effi, Hoko, MasterShop, Chatea Pro, Shopify, WhatsApp, Meta, TikTok y Google pertenecen a sus dueños y se usan solo para identificar cada plataforma.
+- Los logos de Dropi, Effi, Hoko, MasterShop, Chatea Pro, LucidBot, LiliBot, Pancake, SellerChat, Icomfly, Shopify, WhatsApp, Meta, TikTok y Google pertenecen a sus dueños y se usan solo para identificar cada plataforma. Los de los chatbots se tomaron de sus sitios oficiales (el de LiliBot, de su canal de YouTube) y se pasaron a WebP de 64 px.
+- Animación de Dropi (`logos/dropi-afirma.webp`): un ciclo de la animación oficial «Afirmación naranja» de Dropi, entregada por Daniel el 13-nov-2026, reducido a 25 cuadros por segundo con una pausa de 1,7 s antes de repetir; `dropi-afirma-quieto.webp` es su primer cuadro, para quien pide menos movimiento.

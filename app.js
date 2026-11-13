@@ -28,7 +28,13 @@ const PAGO_OK={f:'pago',op:'in',vals:['contraentrega','ambos']};
 const arr=v=>Array.isArray(v)?v:(v===undefined?[]:[v]);
 const descarta=(s,v)=>!!s.end&&(s.endAll?arr(v).length>0&&arr(v).every(x=>s.end.includes(x)):arr(v).some(x=>s.end.includes(x)));
 const HIDE_SEG={f:'chatbot_b3',op:'in',vals:['chatbot']};
-const BOT=[['A mano: yo o mi equipo','manual','img:logos/3d/escribe.webp'],['Con un chatbot (Chatea Pro, LucidBot, Lilibot, Pancake, SellerChat u otro)','chatbot','img:logos/chatea.webp']];
+const BOT=[['A mano: yo o mi equipo','manual','img:logos/3d/escribe.webp'],['Con un chatbot','chatbot','img:logos/3d/bot.webp']];
+// Si usa chatbot, debajo se abre cuál (pedido de Daniel, 13-nov-2026)
+const CHATBOTS=[['Chatea Pro','chateapro','img:logos/chatea.webp'],['LucidBot','lucidbot','img:logos/lucidbot.webp'],['LiliBot','lilibot','img:logos/lilibot.webp'],['Pancake','pancake','img:logos/pancake.webp'],['SellerChat','sellerchat','img:logos/sellerchat.webp'],['Icomfly','icomfly','img:logos/icomfly.webp'],['Otro','otro','img:logos/3d/otra.webp']];
+const USA_BOT=[{f:'chatbot',op:'in',vals:['chatbot']},{f:'chatbot_b3',op:'in',vals:['chatbot']}];
+// Animación oficial de Dropi (asiente y aparece el ✓); quien pide menos movimiento ve el primer cuadro quieto
+const DROPI_ANIM='<picture class="afirma"><source srcset="logos/dropi-afirma-quieto.webp" media="(prefers-reduced-motion: reduce)"><img src="logos/dropi-afirma.webp" alt="Dropi" width="240" height="238"></picture>';
+const REQ='<span class="req" aria-hidden="true">*</span>';
 const STEPS=[
 {k:'ventas',type:'slider',min:0,max:1000,def:0,unit:'ventas diarias',q:'¿Cuántos pedidos vendes al día?',h:'0 = aún no vendo. Arrastra hasta tu promedio.',score:[[0,0,0],[1,10,10],[11,19,15],[20,30,20],[31,69,25],[70,1000,30]],t:'Ventas'},
 {k:'plataforma',m:true,q:'¿Con qué plataformas despachas tus pedidos?',h:'Puedes elegir varias.',o:[['Dropi','dropi','img:logos/dropi.webp'],['Effi','effi','img:logos/effi.svg'],['Hoko','hoko','img:logos/hoko.webp'],['MasterShop','mastershop','img:logos/mastershop.webp'],['Otra plataforma','otra','img:logos/3d/otra.webp'],['Despacho directo con una transportadora','transportadora','img:logos/3d/camion.webp'],['No uso ninguna','ninguna','img:logos/3d/no.webp']],end:['transportadora','ninguna'],endAll:true,show:GT0,g:'plataforma',t:'Plataforma'},
@@ -39,9 +45,14 @@ const STEPS=[
 {k:'vas_bien',type:'message',q:'¡Pasaste el primer filtro!',h:'Cuéntanos ahora 👇🏻',show:PAGO_OK,t:'Mensaje'},
 {k:'chatbot_b3',q:'¿Cómo respondes los mensajes de tus clientes?',o:BOT,g:'operacion',show:PAGO_OK,hide:{f:'ventas',op:'gt',v:19},t:'Chatbot'},
 {k:'chatbot',q:'¿Cómo respondes los mensajes de tus clientes?',o:BOT,g:'operacion',show:PAGO_OK,hide:{f:'ventas',op:'lt',v:20},t:'Chatbot'},
-{k:'confirma',q:'¿Quién confirma los pedidos?',o:[['Yo mismo','yo','img:logos/3d/persona.webp'],['Mi socio','socio','img:logos/3d/apreton.webp'],['Empleados','empleados','img:logos/3d/equipo.webp'],['Una empresa externa','tercero','img:logos/3d/empresa.webp']],g:'operacion',show:PAGO_OK,hide:HIDE_SEG,t:'Quién confirma'},
+{k:'chatbot_cual',q:'¿Cuál chatbot usas?',o:CHATBOTS,c3:true,g:'operacion',show:USA_BOT,t:'Cuál chatbot'},
+{k:'chatbot_otro',type:'text',q:'¿Cuál es? (opcional)',ph:'Nombre del chatbot',show:{f:'chatbot_cual',op:'in',vals:['otro']},g:'operacion',t:'Otro chatbot'},
+{k:'confirma',q:'¿Quién confirma los pedidos?',o:[['Yo mismo','yo','img:logos/3d/persona.webp'],['Mi socio','socio','img:logos/3d/apreton.webp'],['Empleados','empleados','img:logos/3d/equipo.webp'],['Una empresa externa','tercero','img:logos/3d/empresa.webp']],show:PAGO_OK,hide:HIDE_SEG,t:'Quién confirma'},
 {k:'problema',m:true,q:'¿Cuáles son los principales problemas de tu tienda hoy?',h:'Puedes elegir varios.',o:[['Devoluciones','devoluciones','img:logos/3d/paquete.webp'],['Confirmar pedidos','confirmaciones','img:logos/3d/telefono.webp'],['Novedades sin resolver','novedades','img:logos/3d/alerta.webp'],['No doy abasto con los chats','atencion','img:logos/3d/chats.webp'],['Me falta tiempo para crecer','tiempo','img:logos/3d/reloj.webp'],['Mis ventas bajaron','ventas_bajaron','img:logos/3d/baja.webp'],['Ninguno, quiero escalar','escalar','img:logos/3d/cohete.webp']],show:PAGO_OK,hide:HIDE_SEG,t:'Problema'},
-{k:'socios',q:'¿Tomas las decisiones del negocio solo o con socios?',h:'Si tienes socios, en la consultoría deben estar todos los que deciden.',o:[['Solo yo','solo','img:logos/3d/persona.webp'],['Con socio(s) o pareja','socios','img:logos/3d/apreton.webp']],show:PAGO_OK,hide:HIDE_SEG,t:'Socios'},
+{k:'socios',q:'¿Tomas las decisiones del negocio solo o con socios?',h:'Si tienes socios, en la consultoría deben estar todos los que deciden.',o:[['Solo yo','solo','img:logos/3d/persona.webp'],['Con socio(s) o pareja','socios','img:logos/3d/apreton.webp']],g:'socios',show:PAGO_OK,hide:HIDE_SEG,t:'Socios'},
+{k:'socio_nombre',type:'text',pd:true,q:'Nombre de tu socio(a) o pareja (opcional)',ph:'Ej.: Carlos Pérez',show:{f:'socios',op:'in',vals:['socios']},g:'socios',t:'Nombre del socio'},
+{k:'socio_correo',type:'text',it:'email',pd:true,q:'Su correo, para invitarlo(a) a la reunión (opcional)',ph:'nombre@correo.com',show:{f:'socios',op:'in',vals:['socios']},g:'socios',t:'Correo del socio'},
+{k:'invitado_correo',type:'text',it:'email',pd:true,q:'¿Quieres invitar a alguien más a la reunión? Su correo (opcional)',ph:'nombre@correo.com',show:{f:'socios',op:'in',vals:['solo']},g:'socios',t:'Correo de invitado'},
 {k:'contacto',type:'contact',show:PAGO_OK,t:'Datos'},
 {k:'revisando',type:'reveal',show:PAGO_OK,hide:HIDE_SEG,t:'Análisis'}];
 const SCREENS=[];STEPS.forEach(s=>{const last=SCREENS[SCREENS.length-1];if(s.g&&last&&last[0].g===s.g)last.push(s);else SCREENS.push([s])});
@@ -115,7 +126,7 @@ const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function cond(c,ans){const a=ans[c.f];if(a===undefined)return false;
   if(c.op==='in')return arr(a).some(x=>c.vals.includes(x));if(c.op==='gt')return a>c.v;if(c.op==='lt')return a<c.v;if(c.op==='eq')return a===c.v;if(c.op==='between')return a>=c.min&&a<=c.max;return false}
-function vis(s,ans){ans=ans||A;if(s.show&&!cond(s.show,ans))return false;if(s.hide&&cond(s.hide,ans))return false;return true}
+function vis(s,ans){ans=ans||A;if(s.show&&!(Array.isArray(s.show)?s.show.some(c=>cond(c,ans)):cond(s.show,ans)))return false;if(s.hide&&cond(s.hide,ans))return false;return true}
 function scrVis(i,ans){return SCREENS[i].some(s=>vis(s,ans||A))}
 function nextScr(i,ans){for(let j=i+1;j<SCREENS.length;j++)if(scrVis(j,ans))return j;return -1}
 const OPT={ventas:1,plataforma:['dropi'],canal:'pagina',pauta:['meta'],pago:'contraentrega'};
@@ -136,7 +147,7 @@ function clearAfter(k){const i=STEPS.findIndex(s=>s.k===k);STEPS.slice(i+1).forE
 const ICON=ic=>{if(ic.startsWith('img2:')){const [a,b]=ic.slice(5).split('|');return '<span class="ic im two"><img src="'+a+'" alt=""><img src="'+b+'" alt=""></span>'}
   return '<span class="ic im"><img src="'+ic.slice(4)+'" alt=""></span>'};
 
-function cardsHTML(s){return '<div class="fcards">'+s.o.map(o=>'<button class="fc'+(arr(A[s.k]).includes(o[1])?' sel':'')+'"'+(s.m?' aria-pressed="'+arr(A[s.k]).includes(o[1])+'"':'')+' data-k="'+s.k+'" data-v="'+o[1]+'">'+ICON(o[2])+'<span class="lb">'+esc(o[0])+'</span></button>').join('')+'</div>'}
+function cardsHTML(s){return '<div class="fcards'+(s.c3?' c3':'')+'">'+s.o.map(o=>'<button class="fc'+(arr(A[s.k]).includes(o[1])?' sel':'')+'"'+(s.m?' aria-pressed="'+arr(A[s.k]).includes(o[1])+'"':'')+' data-k="'+s.k+'" data-v="'+o[1]+'">'+ICON(o[2])+'<span class="lb">'+esc(o[0])+'</span></button>').join('')+'</div>'}
 // El total de preguntas se calcula sin la respuesta que se está eligiendo, así no cambia mientras la persona decide
 function counter(){const sin={...A};SCREENS[cur].forEach(x=>delete sin[x.k]);const ans=optim(sin);const qs=SCREENS.map((sc,i)=>i).filter(i=>scrVis(i,ans)&&isQ(SCREENS[i]));const n=qs.indexOf(cur)+1;return n>0?'<p class="fcount">Pregunta '+n+' de '+qs.length+'</p>':''}
 const nameOf=()=>(C.nombre||'').split(' ')[0];
@@ -200,14 +211,14 @@ function render(){const c=$('card');c.classList.remove('flood');
   const wire=()=>{$('bk').addEventListener('click',back)};
   if(s.type==='contact'){const seg=A.chatbot_b3==='chatbot';const pc=paisBy(C.pais||'CO');
     const opt=iso=>{const p=paisBy(iso);return '<option value="'+iso+'"'+(pc&&iso===pc[3]?' selected':'')+'>'+p[4]+' '+esc(p[2])+' (+'+p[0]+')</option>'};
-    c.innerHTML='<p class="fcount">Tus datos</p><p class="fq">'+(seg?'Te dejamos en seguimiento 💚 ¿Cómo te llamas?':'¿Cómo te llamas?')+'</p><input class="finput" id="fn" autocomplete="name" placeholder="Ana Gómez" value="'+esc(C.nombre||'')+'"><label class="flabel" for="ph">'+(seg?'¿A qué WhatsApp te escribimos cuando estés vendiendo más?':'¿A qué número te llamamos? Que tenga WhatsApp.')+'</label><div class="ftel"><div class="fcc'+(pc?'':' vacio')+'" id="ccb"><span class="flag" id="ccf">'+(pc?pc[4]:'🌎')+'</span><span id="ccv">'+(pc?'+'+pc[0]:'País')+'</span>'+ICO.chev+'<select id="cc" aria-label="País del celular"><optgroup label="Los más frecuentes">'+PAIS_ORDEN.map(opt).join('')+'</optgroup><optgroup label="Todos los países">'+MUNDO.filter(m=>!PAIS_ORDEN.includes(m[0])).map(m=>opt(m[0])).join('')+'</optgroup></select></div><input class="finput" id="ph" inputmode="tel" autocomplete="tel-national" placeholder="'+(pc?pc[6]:'Número de celular')+'" value="'+esc(C.num||'')+'"></div>'+
-      (seg?'':'<label class="flabel" for="em">¿Y tu correo?</label><input class="finput" id="em" type="email" autocomplete="email" placeholder="nombre@mitienda.co" value="'+esc(C.mail||'')+'">')+
+    c.innerHTML='<p class="fcount">Tus datos</p><p class="fq">'+(seg?'Te dejamos en seguimiento 💚 ¿Cómo te llamas?':'¿Cómo te llamas?')+REQ+'</p><input class="finput" id="fn" aria-required="true" autocomplete="name" placeholder="Ana Gómez" value="'+esc(C.nombre||'')+'"><label class="flabel" for="ph">'+(seg?'¿A qué WhatsApp te escribimos cuando estés vendiendo más?':'¿A qué número te llamamos? Que tenga WhatsApp.')+REQ+'</label><div class="ftel"><div class="fcc'+(pc?'':' vacio')+'" id="ccb"><span class="flag" id="ccf">'+(pc?pc[4]:'🌎')+'</span><span id="ccv">'+(pc?'+'+pc[0]:'País')+'</span>'+ICO.chev+'<select id="cc" aria-label="País del celular"><optgroup label="Los más frecuentes">'+PAIS_ORDEN.map(opt).join('')+'</optgroup><optgroup label="Todos los países">'+MUNDO.filter(m=>!PAIS_ORDEN.includes(m[0])).map(m=>opt(m[0])).join('')+'</optgroup></select></div><input class="finput" id="ph" aria-required="true" inputmode="tel" autocomplete="tel-national" placeholder="'+(pc?pc[6]:'Número de celular')+'" value="'+esc(C.num||'')+'"></div>'+
+      (seg?'':'<label class="flabel" for="em">¿Y tu correo?'+REQ+'</label><input class="finput" id="em" aria-required="true" type="email" autocomplete="email" placeholder="nombre@mitienda.co" value="'+esc(C.mail||'')+'">')+
       '<p class="ferr" id="er"></p><button class="fbtn" id="snd">'+(seg?'Enviar':'Ver horarios')+'</button><div class="fnav" style="padding-top:12px">'+backBtn+'</div>';
     ['fn','ph','em'].forEach(id=>{if($(id))$(id).addEventListener('input',()=>{$('er').textContent='';clearTimeout(tParcial);tParcial=setTimeout(guardarParcial,40000)})});
     $('cc').addEventListener('change',e=>{const p=paisBy(e.target.value);$('ccb').classList.remove('vacio');$('ccf').textContent=p[4];$('ccv').textContent='+'+p[0];$('ph').placeholder=p[6];$('er').textContent='';$('ph').focus()});
     $('snd').addEventListener('click',send);wire();return}
   if(s.type==='reveal'){c.classList.add('flood');const nm=nameOf();const ini=(C.nombre||'?').split(' ').filter(Boolean).map(x=>x[0]).slice(0,2).join('').toUpperCase();
-    c.innerHTML='<div class="result vs"><div class="vsrow"><div class="vsm"><span class="vsc ini">'+esc(ini)+'</span><small>'+esc(nm||'Tú')+'</small></div><div class="vsp" id="vsp">0%</div><div class="vsm"><span class="vsc em"><img src="fenix-emblema.webp" alt=""></span><small>Perfil Fénix</small></div></div><p class="vss">Comparando con tiendas que ya escalaron</p><div class="vsbar"><i id="vsb"></i></div><p class="fq">Analizando tu operación</p><p class="fh">'+(nm?esc(nm)+', estamos':'Estamos')+' revisando si pasaste los últimos filtros</p><span class="vsdr"><span class="guino"><img src="logos/dropi.webp" alt="Dropi"><img src="logos/dropi-guino.webp" alt=""></span></span></div>';
+    c.innerHTML='<div class="result vs"><div class="vsrow"><div class="vsm"><span class="vsc ini">'+esc(ini)+'</span><small>'+esc(nm||'Tú')+'</small></div><div class="vsp" id="vsp">0%</div><div class="vsm"><span class="vsc em"><img src="fenix-emblema.webp" alt=""></span><small>Perfil Fénix</small></div></div><p class="vss">Comparando con tiendas que ya escalaron</p><div class="vsbar"><i id="vsb"></i></div><p class="fq">Analizando tu operación</p><p class="fh">'+(nm?esc(nm)+', estamos':'Estamos')+' revisando si pasaste los últimos filtros</p><span class="vsdr">'+DROPI_ANIM+'</span></div>';
     const T=RM?0:CARGA_MS,t0=performance.now();
     // Mientras corre la carga, el servidor crea el contacto en GHL y busca los horarios del consultor que le toca
     const pendiente=LEAD;
@@ -216,13 +227,13 @@ function render(){const c=$('card');c.classList.remove('flood');
     timers.push(setTimeout(async()=>{const r=pendiente?await pendiente:null;if(LEAD!==pendiente||fin||!$('vsp'))return;
       TOKEN=r&&r.ok?r.token:null;if(r&&r.ok)startAgenda(r.agenda||null);else AG={fallo:true};fin=outcome();render()},T));return}
   if(s.type==='message'){
-    c.innerHTML='<div class="result"><span class="msg-logo"><span class="guino"><img src="logos/dropi.webp" alt="Dropi"><img src="logos/dropi-guino.webp" alt=""></span></span><p class="fq">'+esc(s.q)+'</p><p class="msg">'+esc(s.h)+'</p><button class="fbtn" id="cont">Continuar</button></div><div class="fnav">'+backBtn+'</div>';
+    c.innerHTML='<div class="result"><span class="msg-logo">'+DROPI_ANIM+'</span><p class="fq">'+esc(s.q)+'</p><p class="msg">'+esc(s.h)+'</p><button class="fbtn" id="cont">Continuar</button></div><div class="fnav">'+backBtn+'</div>';
     $('cont').addEventListener('click',advance);wire();return}
   if(s.type==='slider'){const v=A.ventas!==undefined?A.ventas:s.def;
     // Escala en dos tramos (pedido de Daniel): la primera mitad de la barra va de 0 a 100 pedidos, donde está
     // la mayoría, y la segunda de 100 a 1.000. Cada mitad tiene 900 posiciones: cualquier número es alcanzable.
     const N=900,aVal=p=>p<=N?Math.round(p*100/N):100+(p-N),aPos=x=>x<=100?Math.round(x*N/100):N+(x-100);
-    c.innerHTML=counter()+'<p class="fq">'+esc(s.q)+'</p><p class="fh">'+esc(s.h)+'</p><div class="sld"><div class="sval"><span><b id="sv">'+v.toLocaleString('es-CO')+'</b><small>'+esc(s.unit)+'</small></span></div><input type="range" id="sr" min="0" max="'+(2*N)+'" step="1" value="'+aPos(v)+'" aria-label="Ventas diarias" aria-valuetext="'+v+' ventas diarias"><div class="dedo" id="dd" aria-hidden="true" style="--p:'+(aPos(v)/(2*N))+'"><img src="logos/emoji/1f446-1f3fb.svg" alt=""></div></div><button class="fbtn" id="nx" style="margin-top:22px">Siguiente</button><div class="fnav">'+backBtn+'</div>';
+    c.innerHTML=counter()+'<p class="fq">'+esc(s.q)+REQ+'</p><p class="fh">'+esc(s.h)+'</p><div class="sld"><div class="sval"><span><b id="sv">'+v.toLocaleString('es-CO')+'</b><small>'+esc(s.unit)+'</small></span></div><input type="range" id="sr" min="0" max="'+(2*N)+'" step="1" value="'+aPos(v)+'" aria-label="Ventas diarias" aria-valuetext="'+v+' ventas diarias"><div class="dedo" id="dd" aria-hidden="true" style="--p:'+(aPos(v)/(2*N))+'"><img src="logos/emoji/1f446-1f3fb.svg" alt=""></div></div><button class="fbtn" id="nx" style="margin-top:22px">Siguiente</button><div class="fnav">'+backBtn+'</div>';
     const pinta=()=>{const x=aVal(+$('sr').value);$('sv').textContent=x.toLocaleString('es-CO');$('sr').setAttribute('aria-valuetext',x+' ventas diarias');$('dd').style.setProperty('--p',$('sr').value/(2*N))};
     let movio=false;$('sr').addEventListener('input',()=>{pinta();if(!movio){movio=true;ev('desliza')}});
     // Con el teclado las flechas avanzan de a un pedido (y Re Pág / Av Pág de a 10), no de a una posición
@@ -230,11 +241,13 @@ function render(){const c=$('card');c.classList.remove('flood');
       $('sr').value=aPos(Math.min(1000,Math.max(0,aVal(+$('sr').value)+d)));pinta()});
     $('nx').addEventListener('click',()=>{const x=aVal(+$('sr').value);ev('respuesta','ventas',x);setAns('ventas',x);advance()});wire();return}
   const multi=steps.filter(x=>x.o).length>1;
-  c.innerHTML=counter()+steps.map(x=>x.type==='text'?'<div class="grp"><label class="flabel" for="tx_'+x.k+'">'+esc(x.q)+'</label><input class="finput" id="tx_'+x.k+'" data-t="'+x.k+'" placeholder="'+esc(x.ph||'')+'" value="'+esc(A[x.k]||'')+'"></div>':'<div class="grp"><p class="fq'+(multi?' sm':'')+'">'+esc(x.q)+'</p>'+(x.h?'<p class="fh">'+esc(x.h)+'</p>':'')+cardsHTML(x)+'</div>').join('')+'<p class="ferr" id="er"></p><button class="fbtn" id="nx">Siguiente</button><div class="fnav">'+backBtn+'</div>';
+  c.innerHTML=counter()+steps.map(x=>x.type==='text'?'<div class="grp"><label class="flabel" for="tx_'+x.k+'">'+esc(x.q)+'</label><input class="finput" id="tx_'+x.k+'" data-t="'+x.k+'"'+(x.it==='email'?' type="email" inputmode="email" autocomplete="off" maxlength="120"':' maxlength="80"')+' placeholder="'+esc(x.ph||'')+'" value="'+esc(A[x.k]||'')+'"></div>':'<div class="grp"><p class="fq'+(multi?' sm':'')+'">'+esc(x.q)+REQ+'</p>'+(x.h?'<p class="fh">'+esc(x.h)+'</p>':'')+cardsHTML(x)+'</div>').join('')+'<p class="ferr" id="er"></p><button class="fbtn" id="nx">Siguiente</button><div class="fnav">'+backBtn+'</div>';
   c.querySelectorAll('.fc').forEach(b=>b.addEventListener('click',()=>{toggle(b.dataset.k,b.dataset.v);render();const t=c.querySelector('[data-t]');if(t)t.focus()}));
   c.querySelectorAll('[data-t]').forEach(t=>t.addEventListener('input',()=>{A[t.dataset.t]=t.value}));
   $('nx').addEventListener('click',()=>{const miss=sc.filter(x=>vis(x)&&x.o&&!arr(A[x.k]).length);if(miss.length){$('er').textContent='Elige una opción para seguir.';ev('error',null,'sin opción');return}
-    sc.filter(x=>vis(x)).forEach(x=>{if(x.o)ev('respuesta',x.k,arr(A[x.k]).join('+'));else if(x.type==='text'&&A[x.k])ev('respuesta',x.k,A[x.k])});
+    const malo=sc.find(x=>vis(x)&&x.it==='email'&&(A[x.k]||'').trim()&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(A[x.k].trim()));
+    if(malo){$('er').textContent='Revisa el correo: parece incompleto.';ev('error',null,'correo '+malo.k);$('tx_'+malo.k).focus();return}
+    sc.filter(x=>vis(x)).forEach(x=>{if(x.o)ev('respuesta',x.k,arr(A[x.k]).join('+'));else if(x.type==='text'&&(A[x.k]||'').trim())ev('respuesta',x.k,x.pd?'lleno':A[x.k])});
     const ko=sc.find(x=>vis(x)&&descarta(x,A[x.k]));if(ko){hist.push(cur);fin=outcome();render();return}advance()});wire()}
 
 function clearT(){timers.forEach(clearTimeout);timers=[]}
@@ -245,7 +258,7 @@ function precargarIconos(){const urls=new Set();
   STEPS.forEach(s=>(s.o||[]).forEach(o=>{const ic=o[2];
     if(ic.startsWith('img2:'))ic.slice(5).split('|').forEach(u=>urls.add(u));
     else if(ic.startsWith('img:'))urls.add(ic.slice(4))}));
-  urls.add('logos/dropi-guino.webp');
+  urls.add(RM?'logos/dropi-afirma-quieto.webp':'logos/dropi-afirma.webp');
   urls.forEach(u=>{const i=new Image();i.decoding='async';i.src=u})}
 let iconosPrecargados=false;
 // Anti-robots de Cloudflare (Turnstile): casi siempre invisible; solo pide un clic si ve algo sospechoso.
