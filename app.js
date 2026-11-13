@@ -278,7 +278,7 @@ function animarLogo(){const cn=navigator.connection;if(animLogo||RM||(cn&&(cn.sa
 // Se carga al empezar, así el permiso está listo cuando la persona deja sus datos.
 const TS_KEY='0x4AAAAAAF-8NxKnzOw1XekY';let tsId=null,tsTok=null;const tsEspera=[];
 function cargarTS(){if(window.tsListo)return;
-  window.tsListo=()=>{const d=document.createElement('div');d.id='ts';$('fcard').appendChild(d);
+  window.tsListo=()=>{const d=document.createElement('div');d.id='ts';$('fcard').appendChild(d);if(window.ResizeObserver)new ResizeObserver(pedirAjuste).observe(d);
     tsId=turnstile.render(d,{sitekey:TS_KEY,appearance:'interaction-only',theme:'light',language:'es',
       callback:t=>{const f=tsEspera.shift();if(f)f(t);else tsTok=t},'expired-callback':()=>{tsTok=null},'error-callback':()=>{tsTok=null}})};
   const s=document.createElement('script');s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?onload=tsListo&render=explicit';s.async=true;document.head.appendChild(s)}
@@ -332,7 +332,7 @@ function sizeEmb(){const fw=document.querySelector('.fword'),fc=document.querySe
 // (k1: márgenes e íconos; k2: opciones en fila) y, como último recurso, todo se reduce parejo hasta que quepa.
 let tAjuste=0;
 function ajustar(){const f=$('fcard'),c=$('card');if(!f||!c)return;f.classList.remove('k1','k2');c.style.zoom='';
-  const sobra=()=>{const fin=Math.min(f.getBoundingClientRect().bottom,innerHeight)-parseFloat(getComputedStyle(c).paddingBottom||0)*(+c.style.zoom||1);
+  const sobra=()=>{const fin=Math.min(c.getBoundingClientRect().bottom,innerHeight)-parseFloat(getComputedStyle(c).paddingBottom||0)*(+c.style.zoom||1);
     let abajo=0;for(const e of c.children){const r=e.getBoundingClientRect();if(r.height)abajo=Math.max(abajo,r.bottom)}
     return abajo>fin+1||document.documentElement.scrollHeight>innerHeight+1};
   if(!sobra())return;f.classList.add('k1');if(!sobra())return;f.classList.add('k2');if(!sobra())return;
