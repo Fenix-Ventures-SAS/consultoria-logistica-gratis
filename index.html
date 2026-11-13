@@ -72,8 +72,11 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .finput::placeholder{color:#9aa79f}
 .ferr{color:#a12d25;font-size:13px;min-height:20px;margin:8px 0 6px}
 .cover{flex:1;display:flex;flex-direction:column;text-align:left}
-.cover .emb{flex:1;display:grid;place-items:center;min-height:calc(var(--emb,86px) + 24px)}
+.cover .emb{flex:1;display:grid;place-items:center;min-height:calc(var(--emb,86px) + 24px);position:relative;overflow:hidden}
 .cover .emb img{width:var(--emb,86px);height:auto}
+/* Logo animado: caja de 150×210 por cada 69 px de logo, centrada en él; su fondo es el verde de la portada */
+.cover .emb img.anim{position:absolute;left:50%;top:50%;width:calc(var(--emb,86px)*150/69);height:calc(var(--emb,86px)*210/69);max-width:none;transform:translate(-50%,-50%);pointer-events:none;transition:opacity .6s ease}
+.cover .emb img.anim.fuera{opacity:0}
 .cover .cend{flex:.55}
 .cover .fq{font-size:25px}
 .trust{display:flex;align-items:center;justify-content:center;gap:9px;font-size:16.5px;line-height:1.2;color:var(--f-mut);margin:18px 0 0}

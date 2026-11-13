@@ -16,6 +16,13 @@ Formulario de calificación de Fénix Ventures, la vertical logística de Dropi.
       - Si GHL rechaza la cita por los invitados, se crea sin ellos y la nota pide agregarlos a mano.
 
 - `index.html` (estructura y estilos) y `app.js` (preguntas, lógica y agenda) son todo el código, sin librerías externas.
+- **Logo animado de la portada** (`logos/fenix-anima.webp`, 180 KB):
+  - Son los primeros 5 s del video del fénix que entregó Daniel el 13-nov-2026: el fénix vuela, forma el logo, sale un destello y quedan chispas.
+  - El logo queda quieto, sin el fondo oscuro del video, y la animación va pintada sobre el verde de la portada a 12 cuadros por segundo.
+  - La portada abre con el logo oficial. La animación se baja después, corre una vez por visita y al final se funde en el logo oficial.
+  - No corre con ahorro de datos, conexión 2G ni «menos movimiento».
+  - El programa que la arma está en `formulario-dforms/herramientas/logo-animar.mjs`.
+  - La alternativa sobria, un brillo de sol solo con CSS, está en la rama `logo-sol`.
 - Pensada para cargar rápido: la portada baja unos 63 KB en total, con letras recortadas en WOFF2 e imágenes en WebP. Los íconos de las preguntas se precargan en segundo plano.
 - **Medición del recorrido:** la página manda a `/api/evento` cada pantalla, respuesta, aviso de error, toque fuera de botón y salida, sin datos personales. Todo queda en la base D1 `fenix-formulario-visitas` (enlace `DB`), y cada visita se une al contacto de GHL cuando deja sus datos.
 - **Panel privado:** `/panel` muestra el embudo, dónde se va la gente, las respuestas, los tiempos y el recorrido de cada persona. Pide la clave `PANEL_KEY` guardada en Cloudflare.

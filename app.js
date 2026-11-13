@@ -205,7 +205,7 @@ function render(){const c=$('card');c.classList.remove('flood');
     c.innerHTML='<div class="result"><div class="badge-ico" style="background:'+k[0]+';color:'+k[1]+'">'+ICO[o.kind]+'</div><p class="fq">'+esc(o.label)+'</p><p class="msg">'+esc(o.msg).replace(/\n/g,'<br>')+'</p><button class="flink" id="again">Volver a empezar</button></div>';
     $('again').addEventListener('click',reset);return}
   if(cur===-1){c.innerHTML='<div class="cover"><div class="emb"><img src="fenix-emblema.webp" alt="Fénix Ventures"></div><div><p class="fq">Consultoría Logística Gratis</p><p class="fh" style="font-size:14.5px;line-height:1.6">Responde unas preguntas rápidas.<br>Empieza y vemos si quedas elegido.</p><button class="fbtn" id="go">Empezar</button><p class="trust">'+ICO.gift+'Obsequio de <img src="dropi-logo.webp" alt="Dropi"></p></div><div class="cend"></div></div>';
-    $('go').addEventListener('click',start);sizeEmb();return}
+    $('go').addEventListener('click',start);sizeEmb();(window.requestIdleCallback||(f=>setTimeout(f,300)))(animarLogo);return}
   const sc=SCREENS[cur];const steps=sc.filter(s=>vis(s));const s=steps[0];
   const backBtn='<button class="flink" id="bk">← Atrás</button>';
   const wire=()=>{$('bk').addEventListener('click',back)};
@@ -261,6 +261,15 @@ function precargarIconos(){const urls=new Set();
   urls.add(RM?'logos/dropi-afirma-quieto.webp':'logos/dropi-afirma.webp');
   urls.forEach(u=>{const i=new Image();i.decoding='async';i.src=u})}
 let iconosPrecargados=false;
+// Logo animado de la portada (13-nov, pedido de Daniel): el fénix vuela y forma el logo, una vez por visita.
+// Si no le convence, la alternativa sobria es el brillo de sol de la rama logo-sol.
+// Se baja después de mostrar la página, y no corre con ahorro de datos, conexión 2G o «menos movimiento».
+// Al terminar se funde en el logo oficial, que siempre estuvo debajo.
+let animLogo=false;
+function animarLogo(){const cn=navigator.connection;if(animLogo||RM||(cn&&(cn.saveData||/2g/.test(cn.effectiveType||''))))return;animLogo=true;
+  const im=new Image();im.className='anim';im.alt='';im.decoding='async';im.src='logos/fenix-anima.webp';
+  im.decode().then(()=>{const e=document.querySelector('.cover .emb');if(cur!==-1||!e)return;e.appendChild(im);
+    setTimeout(()=>im.classList.add('fuera'),4500);setTimeout(()=>im.remove(),5200)}).catch(()=>{})}
 // Anti-robots de Cloudflare (Turnstile): casi siempre invisible; solo pide un clic si ve algo sospechoso.
 // Se carga al empezar, así el permiso está listo cuando la persona deja sus datos.
 const TS_KEY='0x4AAAAAAF-8NxKnzOw1XekY';let tsId=null,tsTok=null;const tsEspera=[];
