@@ -8,6 +8,12 @@ Formulario de calificación de Fénix Ventures, la vertical logística de Dropi.
 - `functions/api/[[ruta]].js` es el portero, la única parte que habla con GHL. Corre en Cloudflare y la clave vive allá (`GHL2_TOKEN`), nunca en este repositorio.
   - `/api/lead`: crea o actualiza el contacto por WhatsApp sin pisar sus datos, le suma la etiqueta del subdominio (`formevon`, `formpmeta`…), deja la oportunidad de Setter 2.0 en "Requiere atención humana" con todas las respuestas en una nota y devuelve los horarios.
   - `/api/agendar`: vuelve a verificar el horario en GHL, crea la cita (consultor por ventas diarias, como Sofía), guarda `hora_local_cita` y pasa la oportunidad a "Agendado 📆".
+    - **Invitados:** si el lead dejó el correo de su socio o de otra persona, van como invitados (`guests`) de la misma cita.
+      - Los 5 calendarios de los consultores tienen encendido «Añadir invitados», con nombre y correo, desde el 13-nov-2026.
+      - GHL crea o reutiliza un contacto por cada invitado y lo pone en el evento de Google del consultor, así que le llega la invitación de Google con el Meet.
+      - El portero marca esos contactos con la etiqueta `invitado-consultoria` y una nota. Es lo único que corre después de responderle al lead.
+      - Los flujos de citas (SETTING 04B, 05, 06 y 08) están en «Contact only», así que a los invitados no les escribe el bot ni les llegan mensajes de GHL.
+      - Si GHL rechaza la cita por los invitados, se crea sin ellos y la nota pide agregarlos a mano.
 
 - `index.html` (estructura y estilos) y `app.js` (preguntas, lógica y agenda) son todo el código, sin librerías externas.
 - Pensada para cargar rápido: la portada baja unos 63 KB en total, con letras recortadas en WOFF2 e imágenes en WebP. Los íconos de las preguntas se precargan en segundo plano.

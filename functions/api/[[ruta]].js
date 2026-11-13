@@ -447,12 +447,31 @@ async function lead(request, env, cuerpo) {
   if (parcial) return json({ ok: true, parcial: true, nota: hechos[0].data && hechos[0].data.note ? hechos[0].data.note.id : null });
   if (r.seguimiento) return json({ ok: true, seguimiento: true });
   const invitar = [r.socio_nombre && r.socio_correo ? r.socio_nombre + ' (' + r.socio_correo + ')' : r.socio_correo || (r.socio_nombre ? r.socio_nombre + ' (sin correo)' : ''), r.invitado_correo].filter(Boolean).join(', ');
-  const token = await firmar(env, { c: cid, o: oid, t: tier, n: partes[0], tz: c.tz, p: c.pais, ...(invitar ? { i: invitar } : {}), exp: Date.now() + 3 * 3600e3 });
+  // Invitados de la cita (socio o la persona adicional): solo los que tienen correo y no repiten el del lead
+  const invitados = [[r.socio_nombre || 'Socio(a) de ' + partes[0], r.socio_correo], ['Invitado(a) de ' + partes[0], r.invitado_correo]]
+    .filter(([, e]) => e && e !== c.mail);
+  const token = await firmar(env, { c: cid, o: oid, t: tier, n: partes[0], tz: c.tz, p: c.pais, ...(invitar ? { i: invitar } : {}), ...(invitados.length ? { g: invitados } : {}), exp: Date.now() + 3 * 3600e3 });
   return json({ ok: true, tier, token, agenda: await agenda });
 }
 
 /* ---------- POST /api/agendar ---------- */
-async function agendar(request, env, cuerpo) {
+// GHL crea (o reutiliza, por el correo) un contacto por cada invitado al guardar la cita. Aquí se marca con la etiqueta
+// «invitado-consultoria» y una nota, para que el equipo sepa de dónde salió. Los flujos de citas de Fénix (SETTING 04B,
+// 05, 06 y 08) están en «Contact only», así que a los invitados no les escribe nadie: solo reciben la invitación de Google.
+async function marcarInvitados(env, guests, T, cl, ms) {
+  const lead = 'https://app.gohighlevel.com/v2/location/' + LOC + '/contacts/detail/' + T.c;
+  for (const g of guests) {
+    const d = await ghl(env, '/contacts/search/duplicate?locationId=' + LOC + '&email=' + encodeURIComponent(g.email));
+    const id = d.ok && d.data.contact && d.data.contact.id;
+    if (!id) { console.log('invitado sin contacto en GHL'); continue; }
+    await Promise.all([
+      ghl(env, '/contacts/' + id + '/tags', { method: 'POST', body: { tags: ['invitado-consultoria'] } }),
+      ghl(env, '/contacts/' + id + '/notes', { method: 'POST', body: { body: '👥 INVITADO(A) A UNA CONSULTORÍA DESDE EL FORMULARIO WEB\nLo invitó: ' + T.n + ' (' + T.t + ') ' + lead + '\nCon: ' + CAL[cl].nombre + '\nHora Colombia: ' + horaLocal(ms, 'America/Bogota', 'Colombia') + '\nRecibe la invitación de Google con el Meet. Los flujos de citas no lo incluyen.' } })
+    ]);
+  }
+}
+
+async function agendar(request, env, cuerpo, enFondo) {
   const T = await verificar(env, cuerpo.token);
   if (!T) return falla(401, 'permiso');
   const ms = cuerpo.ms, pedido = cuerpo.cl;
@@ -478,10 +497,19 @@ async function agendar(request, env, cuerpo) {
   const hora = horaLocal(ms, T.tz, T.p);
   // La hora local va antes de la cita: la confirmación de GHL la usa
   if (I && I.horaLocal) await ghl(env, '/contacts/' + T.c, { method: 'PUT', body: { customFields: [{ id: I.horaLocal, field_value: hora }] } });
-  const cita = await ghl(env, '/calendars/events/appointments', {
-    method: 'POST', version: '2021-04-15',
-    body: { calendarId: CAL[cl].id, locationId: LOC, contactId: T.c, assignedUserId: CAL[cl].user, startTime: isoBog(ms), endTime: isoBog(ms + DURACION_MIN * 60e3), title: ('Consultoría Fénix - ' + T.n).slice(0, 70) + ' (' + T.t + ')', appointmentStatus: 'confirmed' }
-  });
+  const datosCita = { calendarId: CAL[cl].id, locationId: LOC, contactId: T.c, assignedUserId: CAL[cl].user, startTime: isoBog(ms), endTime: isoBog(ms + DURACION_MIN * 60e3), title: ('Consultoría Fénix - ' + T.n).slice(0, 70) + ' (' + T.t + ')', appointmentStatus: 'confirmed' };
+  // Socio e invitado van como invitados de la misma cita (función «Añadir invitados» del calendario en GHL).
+  // Si GHL rechazara la cita por los invitados, se crea sin ellos: el lead nunca pierde su cita por esto.
+  const guests = Array.isArray(T.g) ? T.g.filter(x => Array.isArray(x) && typeof x[1] === 'string' && x[1].includes('@')).slice(0, 2)
+    .map(([n, e]) => ({ name: limpio(n, 80), fullName: limpio(n, 80), email: limpio(e, 120) })) : [];
+  const crearCita = body => ghl(env, '/calendars/events/appointments', { method: 'POST', version: '2021-04-15', body });
+  let conInvitados = guests.length > 0;
+  let cita = await crearCita(conInvitados ? { ...datosCita, guests } : datosCita);
+  if (!cita.ok && conInvitados && cita.status >= 400 && cita.status < 500) {
+    console.log('cita con invitados rechazada', cita.status, '- se crea sin ellos');
+    conInvitados = false;
+    cita = await crearCita(datosCita);
+  }
   if (!cita.ok) {
     console.log('cita rechazada', cita.status);
     const nuevos = await libres(env, T.t, Date.now(), Date.now() + 5 * 86400e3).then(x => armarHorarios(T.t, x)).catch(() => null);
@@ -489,13 +517,19 @@ async function agendar(request, env, cuerpo) {
   }
   await Promise.all([
     T.o && I ? ghl(env, '/opportunities/' + T.o, { method: 'PUT', body: { pipelineId: I.pipeline, pipelineStageId: I.agendado, status: 'open' } }) : null,
-    ghl(env, '/contacts/' + T.c + '/notes', { method: 'POST', body: { body: '📆 AGENDÓ DESDE EL FORMULARIO WEB\nCon: ' + CAL[cl].nombre + ' (' + T.t + ')\nHora Colombia: ' + horaLocal(ms, 'America/Bogota', 'Colombia') + '\nHora del lead: ' + hora + (T.i ? '\nInvitar también a la reunión: ' + limpio(T.i, 300) + ' (agrégalos a la invitación)' : '') } })
+    ghl(env, '/contacts/' + T.c + '/notes', { method: 'POST', body: { body: '📆 AGENDÓ DESDE EL FORMULARIO WEB\nCon: ' + CAL[cl].nombre + ' (' + T.t + ')\nHora Colombia: ' + horaLocal(ms, 'America/Bogota', 'Colombia') + '\nHora del lead: ' + hora + (conInvitados
+      ? '\nInvitados de la cita (quedan en la invitación de Google con el Meet): ' + guests.map(g => g.fullName + ' <' + g.email + '>').join(', ')
+      : T.i ? '\nInvitar también a la reunión: ' + limpio(T.i, 300) + ' (agrégalos a la invitación)' : '') } })
   ]);
+  if (conInvitados) enFondo(marcarInvitados(env, guests, T, cl, ms));
   return json({ ok: true, ms, consultor: CAL[cl].nombre });
 }
 
 /* ---------- entrada ---------- */
-export async function onRequest({ request, env, params }) {
+export async function onRequest(ctx) {
+  const { request, env, params } = ctx;
+  // Trabajo que sigue después de responder (Cloudflare lo espera); en las pruebas locales simplemente corre
+  const enFondo = p => { const q = Promise.resolve(p).catch(e => console.log('en fondo', e && e.message)); if (ctx.waitUntil) ctx.waitUntil(q); return q; };
   const ruta = (params.ruta || []).join('/');
   if (request.method !== 'POST') return falla(405, 'metodo');
   // Solo se aceptan llamadas desde la misma página
@@ -527,7 +561,7 @@ export async function onRequest({ request, env, params }) {
     }
     if (ruta === 'agendar') {
       if (demasiados(ip, 'a', 40, 10 * 60e3)) return falla(429, 'espera');
-      return await agendar(request, env, cuerpo);
+      return await agendar(request, env, cuerpo, enFondo);
     }
     return falla(404, 'ruta');
   } catch (e) {
