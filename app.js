@@ -87,7 +87,7 @@ function parseReq(txt){const s=txt.toLowerCase().normalize('NFD').replace(/[̀-�
   if(hh===null){hh=8;mm=30}
   return localToMs(day,hh,mm)}
 
-let A={},C={},hist=[],cur=-1,fin=null,timers=[],AG=null,LEAD=null,TOKEN=null;
+let A={},C={},hist=[],cur=-1,fin=null,timers=[],AG=null,LEAD=null,TOKEN=null,ULTIMO=null;
 const CARGA_MS=4500;
 // Llamada al servidor; si se cae la red o el servidor, se reintenta una vez
 async function api(ruta,datos){const una=async()=>{try{const r=await fetch('/api/'+ruta,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(datos),keepalive:true});const j=await r.json().catch(()=>({}));return {...j,status:r.status}}catch(e){return {ok:false,status:0}}};
@@ -127,6 +127,8 @@ function counter(){const ans=optim();const qs=SCREENS.map((sc,i)=>i).filter(i=>s
 const nameOf=()=>(C.nombre||'').split(' ')[0];
 
 function agendaHTML(){const o=OUT[fin];const nm=nameOf();const pc0=country();const pais='hora de '+pc0[2]+(ZONA_CIUDAD[pc0[3]]?' ('+ZONA_CIUDAD[pc0[3]]+')':'');
+  // Si el servidor no pudo guardar, se dice la verdad y se ofrece reintentar (nunca "ya tenemos tus datos")
+  if(AG.fallo)return '<div class="result"><div class="badge-ico" style="background:'+KIND.warn[0]+';color:'+KIND.warn[1]+'">'+ICO.warn+'</div><p class="fq">No pudimos guardar tus datos</p><p class="msg">Revisa tu conexión a internet e inténtalo de nuevo.</p><button class="fbtn" id="reint">Intentar de nuevo</button></div>';
   if(AG.sinAgenda)return '<div class="result"><div class="badge-ico" style="background:#f1f7f3;color:#0b6b3a">'+ICO.ok+'</div><p class="fq">¡'+esc(nm||'Listo')+', tu tienda califica!</p><p class="msg">Ya tenemos tus datos. Un consultor te escribe por WhatsApp para agendar tu '+esc(o.dur)+'.</p><button class="flink" id="again">Volver a empezar</button></div>';
   if(AG.booked){const b=AG.booked;return '<div class="result"><div class="badge-ico" style="background:#f1f7f3;color:#0b6b3a">'+ICO.ok+'</div><p class="fq">¡Listo, '+esc(nm||'listo')+'!</p><p class="msg">'+(b.ya?'Ya tienes agendada tu '+esc(o.dur)+' para el':'Quedó agendada tu '+esc(o.dur)+' para el')+' <b>'+esc(fmt(b.ms,true))+'</b>, '+pais+'.</p><ul class="tips"><li>Te llega la invitación por WhatsApp'+(C.mail?' y al correo':'')+'.</li><li>Conéctate desde el computador, con cámara y buena señal.</li>'+(A.socios==='socios'?'<li>Conéctate con tus socios: deben estar todos los que deciden.</li>':'')+'</ul><button class="flink" id="again">Volver a empezar</button></div>'}
   const title='<p class="fcount">Agenda</p><p class="fq">'+(fin==='b3'?'¡Listo, '+esc(nm)+'!':'¡'+esc(nm)+', tu tienda califica!')+'</p>';
@@ -166,7 +168,8 @@ function render(){const c=$('card');c.classList.remove('flood');
       c.querySelectorAll('.slot[data-ms],.calt').forEach(b=>b.addEventListener('click',()=>book(+b.dataset.ms,b.dataset.cl)));
       if($('oth'))$('oth').addEventListener('click',()=>{AG.mode=AG.mode==='other'?'list':'other';render();if($('othtxt'))$('othtxt').focus()});
       if($('othgo')){$('othgo').addEventListener('click',searchOther);$('othtxt').addEventListener('keydown',e=>{if(e.key==='Enter')searchOther()})}
-      if($('again'))$('again').addEventListener('click',reset);return}
+      if($('again'))$('again').addEventListener('click',reset);
+      if($('reint'))$('reint').addEventListener('click',()=>{LEAD=api('lead',ULTIMO);fin=null;AG=null;render()});return}
     const k=KIND[o.kind];const nm=nameOf();
     c.innerHTML='<div class="result"><div class="badge-ico" style="background:'+k[0]+';color:'+k[1]+'">'+ICO[o.kind]+'</div><p class="fq">'+esc(o.label)+'</p><p class="msg">'+esc(o.msg).replace(/\n/g,'<br>')+'</p><button class="flink" id="again">Volver a empezar</button></div>';
     $('again').addEventListener('click',reset);return}
@@ -191,7 +194,7 @@ function render(){const c=$('card');c.classList.remove('flood');
     const tick=()=>{if(!$('vsp'))return;const k=Math.min(1,(performance.now()-t0)/(T||1));$('vsp').textContent=Math.round(k*100)+'%';$('vsb').style.width=Math.round(k*100)+'%';if(k<1&&!fin)requestAnimationFrame(tick)};
     if(T)requestAnimationFrame(tick);else{$('vsp').textContent='100%'}
     timers.push(setTimeout(async()=>{const r=pendiente?await pendiente:null;if(LEAD!==pendiente||fin||!$('vsp'))return;
-      TOKEN=r&&r.ok?r.token:null;startAgenda(r&&r.ok&&r.agenda?r.agenda:null);fin=outcome();render()},T));return}
+      TOKEN=r&&r.ok?r.token:null;if(r&&r.ok)startAgenda(r.agenda||null);else AG={fallo:true};fin=outcome();render()},T));return}
   if(s.type==='message'){
     c.innerHTML='<div class="result"><img class="msg-logo" src="logos/dropi.webp" alt="Dropi"><p class="fq">'+esc(s.q)+'</p><p class="msg">'+esc(s.h)+'</p><button class="fbtn" id="cont">Continuar</button></div><div class="fnav">'+backBtn+'</div>';
     $('cont').addEventListener('click',advance);wire();return}
@@ -246,9 +249,10 @@ function send(){const n=$('fn').value.trim(),iso=$('cc').value,p=iso?paisBy(iso)
   else if(e&&!/^\S+@\S+\.\S+$/.test(e))m='Revisa el correo: parece incompleto.';
   if(m){$('er').textContent=m;return}
   C={nombre:n,pais:iso,num:t,tel:'+'+p[0]+' '+t,mail:e};AG=null;TOKEN=null;
-  LEAD=api('lead',{respuestas:A,contacto:{nombre:n,tel:p[0]+t,mail:e,tz:p[1],pais:p[2]},origen:Object.entries(ORIGEN).map(([k,v])=>k+'='+v).join(' · ')});
+  ULTIMO={respuestas:A,contacto:{nombre:n,tel:p[0]+t,mail:e,tz:p[1],pais:p[2]},origen:Object.entries(ORIGEN).map(([k,v])=>k+'='+v).join(' · ')};
+  LEAD=api('lead',ULTIMO);
   advance()}
-function reset(){clearT();A={};C={};hist=[];cur=-1;fin=null;AG=null;LEAD=null;TOKEN=null;render()}
+function reset(){clearT();A={};C={};hist=[];cur=-1;fin=null;AG=null;LEAD=null;TOKEN=null;ULTIMO=null;render()}
 
 function sizeEmb(){const fw=document.querySelector('.fword'),fc=document.querySelector('.fcard');
   if(fw&&fc){const w=fw.getBoundingClientRect().width;if(w>0)fc.style.setProperty('--emb',Math.round(w*335/645)+'px')}}
