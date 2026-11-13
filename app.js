@@ -28,20 +28,20 @@ const PAGO_OK={f:'pago',op:'in',vals:['contraentrega','ambos']};
 const arr=v=>Array.isArray(v)?v:(v===undefined?[]:[v]);
 const descarta=(s,v)=>!!s.end&&(s.endAll?arr(v).length>0&&arr(v).every(x=>s.end.includes(x)):arr(v).some(x=>s.end.includes(x)));
 const HIDE_SEG={f:'chatbot_b3',op:'in',vals:['chatbot']};
-const BOT=[['A mano: yo o mi equipo','manual','i:mano'],['Con un chatbot (Chatea Pro, LucidBot, Lilibot, Pancake, SellerChat u otro)','chatbot','img:logos/chatea.webp']];
+const BOT=[['A mano: yo o mi equipo','manual','img:logos/3d/escribe.webp'],['Con un chatbot (Chatea Pro, LucidBot, Lilibot, Pancake, SellerChat u otro)','chatbot','img:logos/chatea.webp']];
 const STEPS=[
 {k:'ventas',type:'slider',min:0,max:1000,def:0,unit:'ventas diarias',q:'¿Cuántos pedidos vendes al día?',h:'0 = aún no vendo. Arrastra hasta tu promedio.',score:[[0,0,0],[1,10,10],[11,19,15],[20,30,20],[31,69,25],[70,1000,30]],t:'Ventas'},
-{k:'plataforma',m:true,q:'¿Con qué plataformas despachas tus pedidos?',h:'Puedes elegir varias.',o:[['Dropi','dropi','img:logos/dropi.webp'],['Effi','effi','img:logos/effi.svg'],['Hoko','hoko','img:logos/hoko.webp'],['MasterShop','mastershop','img:logos/mastershop.webp'],['Otra plataforma','otra','i:mas'],['Despacho directo con una transportadora','transportadora','i:camion'],['No uso ninguna','ninguna','i:no']],end:['transportadora','ninguna'],endAll:true,show:GT0,g:'plataforma',t:'Plataforma'},
+{k:'plataforma',m:true,q:'¿Con qué plataformas despachas tus pedidos?',h:'Puedes elegir varias.',o:[['Dropi','dropi','img:logos/dropi.webp'],['Effi','effi','img:logos/effi.svg'],['Hoko','hoko','img:logos/hoko.webp'],['MasterShop','mastershop','img:logos/mastershop.webp'],['Otra plataforma','otra','img:logos/3d/otra.webp'],['Despacho directo con una transportadora','transportadora','img:logos/3d/camion.webp'],['No uso ninguna','ninguna','img:logos/3d/no.webp']],end:['transportadora','ninguna'],endAll:true,show:GT0,g:'plataforma',t:'Plataforma'},
 {k:'plataforma_otra',type:'text',q:'¿Cuál plataforma usas?',ph:'Escribe el nombre',show:{f:'plataforma',op:'in',vals:['otra']},g:'plataforma',t:'Otra plataforma'},
-{k:'canal',q:'¿Por dónde te llegan los pedidos?',o:[['Landing Page','pagina','img:logos/shopify-color.svg'],['Por WhatsApp','whatsapp_redes','img:logos/whatsapp-color.svg'],['Por Landing y WhatsApp','pagina_whatsapp','img2:logos/shopify-color.svg|logos/whatsapp-color.svg'],['Solo por marketplaces (Mercado Libre, Amazon, Falabella, etc.)','solo_marketplace','i:carrito'],['Solo en tienda física','solo_fisica','i:tienda']],end:['solo_marketplace','solo_fisica'],show:{f:'plataforma',op:'in',vals:PLATS},t:'Canal'},
-{k:'pauta',m:true,q:'¿Estás pautando para vender?',h:'Puedes elegir varias.',o:[['Sí, en Meta (Facebook o Instagram)','meta','img:logos/meta-color.svg'],['Sí, en TikTok','tiktok','img:logos/tiktok-color.svg'],['Sí, en Google','google','img:logos/google-color.svg'],['No pauto','no','i:no']],end:['no'],endAll:true,show:{f:'canal',op:'in',vals:CANAL_OK},t:'Pauta'},
-{k:'pago',q:'¿Cómo te pagan tus clientes?',o:[['Contraentrega','contraentrega','i:billete'],['Contraentrega y anticipado','ambos','i:ambos'],['Solo pago anticipado','anticipado','i:tarjeta']],end:['anticipado'],show:{f:'pauta',op:'in',vals:PAUTA_OK},t:'Pago'},
+{k:'canal',q:'¿Por dónde te llegan los pedidos?',o:[['Landing Page','pagina','img:logos/shopify-color.svg'],['Por WhatsApp','whatsapp_redes','img:logos/whatsapp-color.svg'],['Por Landing y WhatsApp','pagina_whatsapp','img2:logos/shopify-color.svg|logos/whatsapp-color.svg'],['Solo por marketplaces (Mercado Libre, Amazon, Falabella, etc.)','solo_marketplace','img:logos/3d/carrito.webp'],['Solo en tienda física','solo_fisica','img:logos/3d/tienda.webp']],end:['solo_marketplace','solo_fisica'],show:{f:'plataforma',op:'in',vals:PLATS},t:'Canal'},
+{k:'pauta',m:true,q:'¿Estás pautando para vender?',h:'Puedes elegir varias.',o:[['Sí, en Meta (Facebook o Instagram)','meta','img:logos/meta-color.svg'],['Sí, en TikTok','tiktok','img:logos/tiktok-color.svg'],['Sí, en Google','google','img:logos/google-color.svg'],['No pauto','no','img:logos/3d/no.webp']],end:['no'],endAll:true,show:{f:'canal',op:'in',vals:CANAL_OK},t:'Pauta'},
+{k:'pago',q:'¿Cómo te pagan tus clientes?',o:[['Contraentrega','contraentrega','img:logos/3d/billete.webp'],['Contraentrega y anticipado','ambos','img2:logos/3d/billete.webp|logos/3d/tarjeta.webp'],['Solo pago anticipado','anticipado','img:logos/3d/tarjeta.webp']],end:['anticipado'],show:{f:'pauta',op:'in',vals:PAUTA_OK},t:'Pago'},
 {k:'vas_bien',type:'message',q:'¡Pasaste el primer filtro!',h:'Cuéntanos ahora 👇🏻',show:PAGO_OK,t:'Mensaje'},
 {k:'chatbot_b3',q:'¿Cómo respondes los mensajes de tus clientes?',o:BOT,g:'operacion',show:PAGO_OK,hide:{f:'ventas',op:'gt',v:19},t:'Chatbot'},
 {k:'chatbot',q:'¿Cómo respondes los mensajes de tus clientes?',o:BOT,g:'operacion',show:PAGO_OK,hide:{f:'ventas',op:'lt',v:20},t:'Chatbot'},
-{k:'confirma',q:'¿Quién confirma los pedidos?',o:[['Yo mismo','yo','i:persona'],['Mi socio','socio','i:apreton'],['Empleados','empleados','i:equipo'],['Una empresa externa','tercero','i:empresa'],['Un bot','bot','i:bot']],g:'operacion',show:PAGO_OK,hide:HIDE_SEG,t:'Quién confirma'},
-{k:'problema',m:true,q:'¿Cuáles son los principales problemas de tu tienda hoy?',h:'Puedes elegir varios.',o:[['Devoluciones','devoluciones','i:devolucion'],['Confirmar pedidos','confirmaciones','i:telefono'],['Novedades sin resolver','novedades','i:alerta'],['No doy abasto con los chats','atencion','i:chats'],['Me falta tiempo para crecer','tiempo','i:reloj'],['Mis ventas bajaron','ventas_bajaron','i:baja'],['Ninguno, quiero escalar','escalar','i:sube']],show:PAGO_OK,hide:HIDE_SEG,t:'Problema'},
-{k:'socios',q:'¿Tomas las decisiones del negocio solo o con socios?',h:'Si tienes socios, en la consultoría deben estar todos los que deciden.',o:[['Solo yo','solo','i:persona'],['Con socio(s) o pareja','socios','i:equipo']],show:PAGO_OK,hide:HIDE_SEG,t:'Socios'},
+{k:'confirma',q:'¿Quién confirma los pedidos?',o:[['Yo mismo','yo','img:logos/3d/persona.webp'],['Mi socio','socio','img:logos/3d/apreton.webp'],['Empleados','empleados','img:logos/3d/equipo.webp'],['Una empresa externa','tercero','img:logos/3d/empresa.webp'],['Un bot','bot','img:logos/3d/bot.webp']],g:'operacion',show:PAGO_OK,hide:HIDE_SEG,t:'Quién confirma'},
+{k:'problema',m:true,q:'¿Cuáles son los principales problemas de tu tienda hoy?',h:'Puedes elegir varios.',o:[['Devoluciones','devoluciones','img:logos/3d/paquete.webp'],['Confirmar pedidos','confirmaciones','img:logos/3d/telefono.webp'],['Novedades sin resolver','novedades','img:logos/3d/alerta.webp'],['No doy abasto con los chats','atencion','img:logos/3d/chats.webp'],['Me falta tiempo para crecer','tiempo','img:logos/3d/reloj.webp'],['Mis ventas bajaron','ventas_bajaron','img:logos/3d/baja.webp'],['Ninguno, quiero escalar','escalar','img:logos/3d/cohete.webp']],show:PAGO_OK,hide:HIDE_SEG,t:'Problema'},
+{k:'socios',q:'¿Tomas las decisiones del negocio solo o con socios?',h:'Si tienes socios, en la consultoría deben estar todos los que deciden.',o:[['Solo yo','solo','img:logos/3d/persona.webp'],['Con socio(s) o pareja','socios','img:logos/3d/apreton.webp']],show:PAGO_OK,hide:HIDE_SEG,t:'Socios'},
 {k:'contacto',type:'contact',show:PAGO_OK,t:'Datos'},
 {k:'revisando',type:'reveal',show:PAGO_OK,hide:HIDE_SEG,t:'Análisis'}];
 const SCREENS=[];STEPS.forEach(s=>{const last=SCREENS[SCREENS.length-1];if(s.g&&last&&last[0].g===s.g)last.push(s);else SCREENS.push([s])});
@@ -133,32 +133,8 @@ function outcome(ans){ans=ans||A;
   if(ans.chatbot_b3==='chatbot')return'seguimiento';
   const p=ptsVentas(ans);return p>=30?'b1':p>=20?'b2':'b3'}
 function clearAfter(k){const i=STEPS.findIndex(s=>s.k===k);STEPS.slice(i+1).forEach(s=>{if(isAns(s)||s.type==='text')delete A[s.k]})}
-// Íconos de línea para las respuestas (estilo Lucide, licencia ISC): limpios y en el color de la marca
-const ICONOS={
-  mas:'<circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/>',
-  camion:'<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
-  no:'<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
-  carrito:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
-  tienda:'<path d="M3 9.5 4.6 4h14.8L21 9.5"/><path d="M3 9.5h18"/><path d="M3 9.5a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0"/><path d="M5 12.4V20h14v-7.6"/><path d="M10 20v-4.5h4V20"/>',
-  billete:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>',
-  ambos:'<path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',
-  tarjeta:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
-  mano:'<path d="M18 11V6a2 2 0 0 0-4 0"/><path d="M14 10V4a2 2 0 0 0-4 0v2"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>',
-  persona:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
-  apreton:'<path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/>',
-  equipo:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-  empresa:'<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4M10 10h4M10 14h4M10 18h4"/>',
-  bot:'<path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/>',
-  devolucion:'<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
-  telefono:'<path d="M13 2a9 9 0 0 1 9 9"/><path d="M13 6a5 5 0 0 1 5 5"/><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
-  alerta:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/>',
-  chats:'<path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/>',
-  reloj:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
-  baja:'<path d="M22 17 13.5 8.5l-5 5L2 7"/><path d="M16 17h6v-6"/>',
-  sube:'<path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>'};
 const ICON=ic=>{if(ic.startsWith('img2:')){const [a,b]=ic.slice(5).split('|');return '<span class="ic im two"><img src="'+a+'" alt=""><img src="'+b+'" alt=""></span>'}
-  if(ic.startsWith('img:'))return '<span class="ic im"><img src="'+ic.slice(4)+'" alt=""></span>';
-  return '<span class="ic sv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONOS[ic.slice(2)]+'</svg></span>'};
+  return '<span class="ic im"><img src="'+ic.slice(4)+'" alt=""></span>'};
 
 function cardsHTML(s){return '<div class="fcards">'+s.o.map(o=>'<button class="fc'+(arr(A[s.k]).includes(o[1])?' sel':'')+'"'+(s.m?' aria-pressed="'+arr(A[s.k]).includes(o[1])+'"':'')+' data-k="'+s.k+'" data-v="'+o[1]+'">'+ICON(o[2])+'<span class="lb">'+esc(o[0])+'</span></button>').join('')+'</div>'}
 // El total de preguntas se calcula sin la respuesta que se está eligiendo, así no cambia mientras la persona decide
@@ -231,7 +207,7 @@ function render(){const c=$('card');c.classList.remove('flood');
     $('cc').addEventListener('change',e=>{const p=paisBy(e.target.value);$('ccb').classList.remove('vacio');$('ccf').textContent=p[4];$('ccv').textContent='+'+p[0];$('ph').placeholder=p[6];$('er').textContent='';$('ph').focus()});
     $('snd').addEventListener('click',send);wire();return}
   if(s.type==='reveal'){c.classList.add('flood');const nm=nameOf();const ini=(C.nombre||'?').split(' ').filter(Boolean).map(x=>x[0]).slice(0,2).join('').toUpperCase();
-    c.innerHTML='<div class="result vs"><div class="vsrow"><div class="vsm"><span class="vsc ini">'+esc(ini)+'</span><small>'+esc(nm||'Tú')+'</small></div><div class="vsp" id="vsp">0%</div><div class="vsm"><span class="vsc em"><img src="fenix-emblema.webp" alt=""></span><small>Perfil Fénix</small></div></div><p class="vss">Comparando con tiendas que ya escalaron</p><div class="vsbar"><i id="vsb"></i></div><p class="fq">Analizando tu operación</p><p class="fh">'+(nm?esc(nm)+', estamos':'Estamos')+' revisando si pasaste los últimos filtros</p></div><div class="vsfin"><span class="vsc dr"><span class="guino"><img src="logos/dropi.webp" alt="Dropi"><img src="logos/dropi-guino.webp" alt=""></span></span></div>';
+    c.innerHTML='<div class="result vs"><div class="vsrow"><div class="vsm"><span class="vsc ini">'+esc(ini)+'</span><small>'+esc(nm||'Tú')+'</small></div><div class="vsp" id="vsp">0%</div><div class="vsm"><span class="vsc em"><img src="fenix-emblema.webp" alt=""></span><small>Perfil Fénix</small></div></div><p class="vss">Comparando con tiendas que ya escalaron</p><div class="vsbar"><i id="vsb"></i></div><p class="fq">Analizando tu operación</p><p class="fh">'+(nm?esc(nm)+', estamos':'Estamos')+' revisando si pasaste los últimos filtros</p><span class="vsdr"><span class="guino"><img src="logos/dropi.webp" alt="Dropi"><img src="logos/dropi-guino.webp" alt=""></span></span></div>';
     const T=RM?0:CARGA_MS,t0=performance.now();
     // Mientras corre la carga, el servidor crea el contacto en GHL y busca los horarios del consultor que le toca
     const pendiente=LEAD;

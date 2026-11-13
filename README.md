@@ -19,6 +19,6 @@ Formulario de calificación de Fénix Ventures, la vertical logística de Dropi.
 
 - Letra Museo 700: Jos Buivenga, [exljbris](https://www.exljbris.com).
 - Letra Figtree: Erik Kennedy, licencia SIL Open Font License 1.1.
-- Íconos de las respuestas: estilo [Lucide](https://lucide.dev), licencia ISC.
+- Imágenes 3D de las respuestas: [Fluent Emoji](https://github.com/microsoft/fluentui-emoji) de Microsoft, licencia MIT (reducidas a WebP de 120 px).
 - Dedito del deslizador: [Twemoji](https://github.com/jdecked/twemoji), licencia CC-BY 4.0.
 - Los logos de Dropi, Effi, Hoko, MasterShop, Chatea Pro, Shopify, WhatsApp, Meta, TikTok y Google pertenecen a sus dueños y se usan solo para identificar cada plataforma.

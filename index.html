@@ -76,9 +76,9 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .cover .emb img{width:var(--emb,86px);height:auto}
 .cover .cend{flex:.55}
 .cover .fq{font-size:25px}
-.trust{display:flex;align-items:center;justify-content:center;gap:12px;font-size:25px;line-height:1.1;color:var(--f-mut);margin:22px 0 0}
-.trust svg{width:36px;height:36px;color:var(--f-gold-deep);flex:none}
-.trust img{height:30px;width:auto;margin-left:2px}
+.trust{display:flex;align-items:center;justify-content:center;gap:9px;font-size:16.5px;line-height:1.2;color:var(--f-mut);margin:18px 0 0}
+.trust svg{width:23px;height:23px;color:var(--f-gold-deep);flex:none}
+.trust img{height:20px;width:auto;margin-left:1px}
 .result{margin:auto 0;text-align:center}
 .badge-ico{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;margin:0 auto 16px}
 .badge-ico svg{width:26px;height:26px}
@@ -98,9 +98,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .fc:hover{border-color:var(--f-green)}
 .fc:active{transform:scale(.98)}
 .fc:focus-visible{outline:2px solid var(--f-gold);outline-offset:2px}
-.fc .ic{width:30px;height:30px;display:grid;place-items:center;line-height:1}
-.fc .ic.sv{color:var(--f-green)}
-.fc .ic.sv svg{width:28px;height:28px}
+.fc .ic{width:42px;height:42px;display:grid;place-items:center;line-height:1}
 .fc.sel{border-color:var(--f-green);background:var(--f-tint);box-shadow:inset 0 0 0 1px var(--f-green)}
 .grp{margin-bottom:16px}
 .fq.sm{font-size:17px;margin-bottom:4px}
@@ -123,16 +121,19 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .vsm{display:flex;flex-direction:column;align-items:center;gap:6px}
 .vsm small{font-size:11.5px;color:#d9eee2;letter-spacing:.04em}
 .vsc{width:58px;height:58px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:26px}
-.vsc.em img,.vsc.dr .guino{width:58px;height:58px}
-.vsfin{display:flex;justify-content:center;padding-top:18px}
+.vsc.em img{width:58px;height:58px}
+.vsdr{display:block;width:58px;height:58px;margin:30px auto 0}
 .vsp{font-family:var(--display);font-size:24px;color:#f5c21b;min-width:3.2ch;text-align:center;font-variant-numeric:tabular-nums}
 .vss{font-size:12.5px;color:#d9eee2;margin:0 0 10px}
 .vsbar{height:4px;background:rgba(255,255,255,.25);border-radius:2px;overflow:hidden;margin:0 auto 18px;max-width:220px}
 .vsbar i{display:block;height:100%;width:0;background:#f5c21b}
 .ic.im{overflow:visible}
-.ic.im img{width:28px;height:28px;object-fit:contain}
+.ic.im img{width:34px;height:34px;object-fit:contain}
+/* Las imágenes 3D traen aire alrededor: van un poco más grandes que los logos para verse del mismo tamaño */
+.ic.im img[src*="/3d/"]{width:40px;height:40px}
 .ic.im.two{width:auto;gap:6px;display:flex}
-.ic.im.two img{width:26px;height:26px}
+.ic.im.two img{width:32px;height:32px}
+.ic.im.two img[src*="/3d/"]{width:36px;height:36px}
 .ftel{display:flex;gap:8px;align-items:stretch}
 .ftel .finput{flex:1;min-width:0}
 .fcc{position:relative;flex:none;display:flex;align-items:center;gap:6px;padding:0 9px 0 11px;border:1px solid var(--f-line);border-radius:10px;background:var(--f-bg);font-size:14.5px;color:var(--f-tx);white-space:nowrap}
@@ -178,7 +179,7 @@ main{display:flex;justify-content:center;width:100%}
 /* Celulares angostos (320-370 px): el encabezado no se parte */
 .fhead .partner>span{white-space:nowrap}
 @media (max-width:389px){.fhead{gap:10px;padding:14px 10px}.fhead .fword{font-size:19px}.fhead .partner{font-size:8.5px;gap:7px}.fhead .partner img{height:24px}}
-@media (max-width:350px){.fhead{gap:8px}.fhead .fword{font-size:16.5px}.fhead .partner{font-size:7.5px;gap:6px}.fhead .partner img{height:21px}.fbody{padding:22px 16px 18px}.trust{font-size:21px;gap:9px}.trust svg{width:30px;height:30px}.trust img{height:26px}}
+@media (max-width:350px){.fhead{gap:8px}.fhead .fword{font-size:16.5px}.fhead .partner{font-size:7.5px;gap:6px}.fhead .partner img{height:21px}.fbody{padding:22px 16px 18px}.trust{font-size:15px;gap:8px}.trust svg{width:21px;height:21px}.trust img{height:18px}}
 </style>
 </head>
 <body>
