@@ -42,6 +42,8 @@ const limpio = (v, max) => typeof v === 'string' ? v.replace(/[\u0000-\u001f\u00
 const bogDia = ms => new Date(ms - 5 * 3600e3).toISOString().slice(0, 10);
 const noLaboral = d => FESTIVOS.has(d) || new Date(d + 'T12:00:00-05:00').getUTCDay() === 0;
 const isoBog = ms => new Date(ms - 5 * 3600e3).toISOString().slice(0, 19) + '-05:00';
+// GHL entrega la hora de las citas sin zona ("2026-11-13 15:00:00"): es hora de Bogotá, la de la cuenta
+const leerHoraGhl = s => { const t = String(s || '').trim().replace(' ', 'T'); return Date.parse(/[zZ]$|[+-]\d\d:?\d\d$/.test(t) ? t : t + '-05:00'); };
 
 // Límite de intentos por IP (por servidor de Cloudflare; frena ráfagas, no reemplaza la verificación anti-robots).
 // Es holgado porque en un evento presencial muchos asistentes comparten el mismo wifi.
@@ -300,16 +302,18 @@ async function agendar(request, env, cuerpo) {
   const ms = cuerpo.ms, pedido = cuerpo.cl;
   if (!Number.isInteger(ms) || ms < Date.now() || ms > Date.now() + 10 * 86400e3) return falla(400, 'hora');
   if (!ORDEN[T.t].includes(pedido)) return falla(400, 'consultor');
-  const I = await ids(env).catch(() => null);
-
+  // En paralelo: ids de GHL, citas que ya tenga y horarios libres de ese día
+  const dia = bogDia(ms);
+  const [I, citas, porCloser] = await Promise.all([
+    ids(env).catch(() => null),
+    ghl(env, '/contacts/' + T.c + '/appointments'),
+    libres(env, T.t, Date.parse(dia + 'T00:00:00-05:00'), Date.parse(dia + 'T23:59:59-05:00'))
+  ]);
   // Una sola cita por persona: si ya tiene una próxima, no se crea otra
-  const citas = await ghl(env, '/contacts/' + T.c + '/appointments');
-  const proxima = (citas.data.events || []).find(e => Date.parse(e.startTime) > Date.now() && !/cancel|invalid|noshow/i.test(String(e.appointmentStatus || e.appoinmentStatus || '')));
-  if (proxima) return json({ ok: true, ya: true, ms: Date.parse(proxima.startTime) });
+  const proxima = (citas.data.events || []).find(e => leerHoraGhl(e.startTime) > Date.now() && !/cancel|invalid|noshow/i.test(String(e.appointmentStatus || e.appoinmentStatus || '')));
+  if (proxima) return json({ ok: true, ya: true, ms: leerHoraGhl(proxima.startTime) });
 
   // El horario se verifica de nuevo en GHL: primero con el consultor elegido y, si se ocupó, con el siguiente por prioridad
-  const dia = bogDia(ms);
-  const porCloser = await libres(env, T.t, Date.parse(dia + 'T00:00:00-05:00'), Date.parse(dia + 'T23:59:59-05:00'));
   const cl = (porCloser[pedido] || []).includes(ms) ? pedido : ORDEN[T.t].find(k => (porCloser[k] || []).includes(ms));
   if (!cl) {
     const nuevos = await libres(env, T.t, Date.now(), Date.now() + 5 * 86400e3).then(x => armarHorarios(T.t, x)).catch(() => null);
