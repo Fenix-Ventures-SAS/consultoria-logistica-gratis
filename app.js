@@ -169,7 +169,7 @@ function render(){const c=$('card');c.classList.remove('flood');
       if($('oth'))$('oth').addEventListener('click',()=>{AG.mode=AG.mode==='other'?'list':'other';render();if($('othtxt'))$('othtxt').focus()});
       if($('othgo')){$('othgo').addEventListener('click',searchOther);$('othtxt').addEventListener('keydown',e=>{if(e.key==='Enter')searchOther()})}
       if($('again'))$('again').addEventListener('click',reset);
-      if($('reint'))$('reint').addEventListener('click',()=>{LEAD=api('lead',ULTIMO);fin=null;AG=null;render()});return}
+      if($('reint'))$('reint').addEventListener('click',()=>{LEAD=tokenTS().then(ts=>api('lead',{...ULTIMO,ts}));fin=null;AG=null;render()});return}
     const k=KIND[o.kind];const nm=nameOf();
     c.innerHTML='<div class="result"><div class="badge-ico" style="background:'+k[0]+';color:'+k[1]+'">'+ICO[o.kind]+'</div><p class="fq">'+esc(o.label)+'</p><p class="msg">'+esc(o.msg).replace(/\n/g,'<br>')+'</p><button class="flink" id="again">Volver a empezar</button></div>';
     $('again').addEventListener('click',reset);return}
@@ -230,7 +230,20 @@ function precargarIconos(){const urls=new Set();
     else if(!/^[A-Z]{1,2}$/.test(ic))urls.add('logos/emoji/'+[...ic].map(ch=>ch.codePointAt(0).toString(16)).filter(x=>x!=='fe0f').join('-')+'.svg')}));
   urls.forEach(u=>{const i=new Image();i.decoding='async';i.src=u})}
 let iconosPrecargados=false;
-function start(){clearT();hist=[];AG=null;cur=nextScr(-1,{ventas:1});render();
+// Anti-robots de Cloudflare (Turnstile): casi siempre invisible; solo pide un clic si ve algo sospechoso.
+// Se carga al empezar, así el permiso está listo cuando la persona deja sus datos.
+const TS_KEY='0x4AAAAAAF-8NxKnzOw1XekY';let tsId=null,tsTok=null;const tsEspera=[];
+function cargarTS(){if(window.tsListo)return;
+  window.tsListo=()=>{const d=document.createElement('div');d.id='ts';$('fcard').appendChild(d);
+    tsId=turnstile.render(d,{sitekey:TS_KEY,appearance:'interaction-only',theme:'light',language:'es',
+      callback:t=>{const f=tsEspera.shift();if(f)f(t);else tsTok=t},'expired-callback':()=>{tsTok=null},'error-callback':()=>{tsTok=null}})};
+  const s=document.createElement('script');s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?onload=tsListo&render=explicit';s.async=true;document.head.appendChild(s)}
+// Entrega un permiso de un solo uso (espera hasta 15 s si aún se está verificando) y pide otro para el siguiente envío
+function tokenTS(){return new Promise(res=>{let listo=false;
+  const usar=t=>{if(listo)return;listo=true;tsTok=null;if(tsId!==null)setTimeout(()=>window.turnstile.reset(tsId),0);res(t)};
+  if(tsTok)return usar(tsTok);tsEspera.push(usar);
+  setTimeout(()=>{const i=tsEspera.indexOf(usar);if(i>=0)tsEspera.splice(i,1);if(!listo){listo=true;res('')}},15000)})}
+function start(){clearT();hist=[];AG=null;cur=nextScr(-1,{ventas:1});render();cargarTS();
   if(!iconosPrecargados){iconosPrecargados=true;(window.requestIdleCallback||(f=>setTimeout(f,200)))(precargarIconos)}}
 function advance(){hist.push(cur);const n=nextScr(cur);if(n<0){fin=outcome()}else cur=n;render()}
 function pick(k,v){setAns(k,v);const s=STEPS.find(x=>x.k===k);if(s.end&&s.end.includes(v)){hist.push(cur);fin=outcome();render();return}advance()}
@@ -250,7 +263,7 @@ function send(){const n=$('fn').value.trim(),iso=$('cc').value,p=iso?paisBy(iso)
   if(m){$('er').textContent=m;return}
   C={nombre:n,pais:iso,num:t,tel:'+'+p[0]+' '+t,mail:e};AG=null;TOKEN=null;
   ULTIMO={respuestas:A,contacto:{nombre:n,tel:p[0]+t,mail:e,tz:p[1],pais:p[2]},origen:Object.entries(ORIGEN).map(([k,v])=>k+'='+v).join(' · ')};
-  LEAD=api('lead',ULTIMO);
+  LEAD=tokenTS().then(ts=>api('lead',{...ULTIMO,ts}));
   advance()}
 function reset(){clearT();A={};C={};hist=[];cur=-1;fin=null;AG=null;LEAD=null;TOKEN=null;ULTIMO=null;render()}
 

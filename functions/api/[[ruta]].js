@@ -230,10 +230,25 @@ function notaRespuestas(r, c, etiqueta, origen, tier) {
   return filas.join('\n');
 }
 
+/* Anti-robots (Turnstile de Cloudflare): se exige en cuanto la clave TURNSTILE_SECRET está guardada en Cloudflare */
+async function esPersona(env, token, ip) {
+  if (!env.TURNSTILE_SECRET) return true;
+  if (typeof token !== 'string' || !token || token.length > 2048) return false;
+  const f = new FormData();
+  f.append('secret', env.TURNSTILE_SECRET); f.append('response', token); f.append('remoteip', ip);
+  try {
+    const j = await (await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: f })).json();
+    return j.success === true && HOST_OK.test(j.hostname || '');
+  } catch { return false; }
+}
+// Solo se atiende desde las direcciones oficiales (no desde copias viejas de la página)
+const HOST_OK = /^(form[a-z]*\.fenixventures\.co|consultoria-logistica-gratis\.pages\.dev)$/;
+
 /* ---------- POST /api/lead ---------- */
 async function lead(request, env, cuerpo) {
   const r = leerRespuestas(cuerpo.respuestas), c = leerContacto(cuerpo.contacto);
   if (!r || !c) return falla(400, 'datos');
+  if (!await esPersona(env, cuerpo.ts, request.headers.get('CF-Connecting-IP') || '')) return falla(403, 'robot');
   const etiqueta = etiquetaDe(request);
   const origen = limpio(cuerpo.origen, 300);
   const tier = tierDe(r.ventas);
@@ -344,7 +359,10 @@ export async function onRequest({ request, env, params }) {
   if (request.method !== 'POST') return falla(405, 'metodo');
   // Solo se aceptan llamadas desde la misma página
   const origin = request.headers.get('Origin');
-  if (!origin || new URL(origin).host !== new URL(request.url).host) return falla(403, 'origen');
+  const host = new URL(request.url).host;
+  let deDonde = '';
+  try { deDonde = new URL(origin).host; } catch { }
+  if (!HOST_OK.test(host) || deDonde !== host) return falla(403, 'origen');
   if (!(request.headers.get('content-type') || '').startsWith('application/json')) return falla(415, 'tipo');
   if (!env.GHL2_TOKEN) return falla(503, 'config');
   const ip = request.headers.get('CF-Connecting-IP') || '?';

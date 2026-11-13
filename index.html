@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="robots" content="noindex, nofollow">
 <title>Consultoría Logística Gratis | Fénix Ventures</title>
@@ -119,6 +119,9 @@ code{font-family:var(--mono);font-size:.92em}
 .sval span{display:inline-block;min-width:2.6em;font-family:var(--display);font-size:40px;line-height:1;color:var(--f-green);background:var(--f-tint);border-radius:999px;padding:10px 22px;font-variant-numeric:tabular-nums}
 .sld input[type=range]{width:100%;accent-color:#0b6b3a;margin:22px 0 6px;height:28px}
 /* Dedito bajo el círculo de la barra: lo sigue al moverlo e invita a arrastrar */
+/* Anti-robots: solo aparece si Cloudflare necesita que la persona haga un clic */
+#ts{display:flex;justify-content:center}
+#ts:has(iframe){margin-top:14px}
 .dedo{position:relative;height:34px;pointer-events:none}
 .dedo img{position:absolute;top:0;left:calc(var(--p,0) * (100% - 20px) + 10px);width:28px;height:28px;margin-left:-14px;animation:dedo 1.6s ease-in-out infinite}
 @keyframes dedo{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
