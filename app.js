@@ -196,10 +196,10 @@ function render(){const c=$('card');c.classList.remove('flood');
     c.innerHTML='<div class="result"><img class="msg-logo" src="logos/dropi.webp" alt="Dropi"><p class="fq">'+esc(s.q)+'</p><p class="msg">'+esc(s.h)+'</p><button class="fbtn" id="cont">Continuar</button></div><div class="fnav">'+backBtn+'</div>';
     $('cont').addEventListener('click',advance);wire();return}
   if(s.type==='slider'){const v=A.ventas!==undefined?A.ventas:s.def;
-    // Escala en dos tramos: la primera mitad de la barra va de 0 a 50 pedidos (donde está la mayoría)
-    // y la segunda de 50 a 1.000. Cada mitad tiene 950 posiciones, así que cualquier número es alcanzable.
-    const N=950,aVal=p=>p<=N?Math.round(p*50/N):50+(p-N),aPos=x=>x<=50?Math.round(x*N/50):N+(x-50);
-    c.innerHTML=counter()+'<p class="fq">'+esc(s.q)+'</p><p class="fh">'+esc(s.h)+'</p><div class="sld"><div class="sval"><span><b id="sv">'+v.toLocaleString('es-CO')+'</b><small>'+esc(s.unit)+'</small></span></div><input type="range" id="sr" min="0" max="'+(2*N)+'" step="1" value="'+aPos(v)+'" aria-label="Ventas diarias" aria-valuetext="'+v+' ventas diarias"><div class="ends"><span>0</span><span>50</span><span>1.000</span></div></div><button class="fbtn" id="nx" style="margin-top:22px">Siguiente</button><div class="fnav">'+backBtn+'</div>';
+    // Escala en dos tramos (pedido de Daniel): la primera mitad de la barra va de 0 a 100 pedidos, donde está
+    // la mayoría, y la segunda de 100 a 1.000. Cada mitad tiene 900 posiciones: cualquier número es alcanzable.
+    const N=900,aVal=p=>p<=N?Math.round(p*100/N):100+(p-N),aPos=x=>x<=100?Math.round(x*N/100):N+(x-100);
+    c.innerHTML=counter()+'<p class="fq">'+esc(s.q)+'</p><p class="fh">'+esc(s.h)+'</p><div class="sld"><div class="sval"><span><b id="sv">'+v.toLocaleString('es-CO')+'</b><small>'+esc(s.unit)+'</small></span></div><input type="range" id="sr" min="0" max="'+(2*N)+'" step="1" value="'+aPos(v)+'" aria-label="Ventas diarias" aria-valuetext="'+v+' ventas diarias"><div class="ends"><span>0</span><span>100</span><span>1.000</span></div></div><button class="fbtn" id="nx" style="margin-top:22px">Siguiente</button><div class="fnav">'+backBtn+'</div>';
     const pinta=()=>{const x=aVal(+$('sr').value);$('sv').textContent=x.toLocaleString('es-CO');$('sr').setAttribute('aria-valuetext',x+' ventas diarias')};
     $('sr').addEventListener('input',pinta);
     // Con el teclado las flechas avanzan de a un pedido (y Re Pág / Av Pág de a 10), no de a una posición
