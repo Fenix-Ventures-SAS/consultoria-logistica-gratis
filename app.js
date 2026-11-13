@@ -178,7 +178,7 @@ function render(){const c=$('card');c.classList.remove('flood');
   if(s.type==='contact'){const seg=A.chatbot_b3==='chatbot';const pc=paisBy(C.pais||'CO');
     const opt=iso=>{const p=paisBy(iso);return '<option value="'+iso+'"'+(pc&&iso===pc[3]?' selected':'')+'>'+p[4]+' '+esc(p[2])+' (+'+p[0]+')</option>'};
     c.innerHTML='<p class="fcount">Tus datos</p><p class="fq">'+(seg?'Te dejamos en seguimiento 💚 ¿Cómo te llamas?':'¿Cómo te llamas?')+'</p><input class="finput" id="fn" autocomplete="name" placeholder="Ana Gómez" value="'+esc(C.nombre||'')+'"><label class="flabel" for="ph">'+(seg?'¿A qué WhatsApp te escribimos cuando estés vendiendo más?':'¿A qué número te llamamos? Que tenga WhatsApp.')+'</label><div class="ftel"><div class="fcc'+(pc?'':' vacio')+'" id="ccb"><span class="flag" id="ccf">'+(pc?pc[4]:'🌎')+'</span><span id="ccv">'+(pc?'+'+pc[0]:'País')+'</span>'+ICO.chev+'<select id="cc" aria-label="País del celular"><optgroup label="Los más frecuentes">'+PAIS_ORDEN.map(opt).join('')+'</optgroup><optgroup label="Todos los países">'+MUNDO.filter(m=>!PAIS_ORDEN.includes(m[0])).map(m=>opt(m[0])).join('')+'</optgroup></select></div><input class="finput" id="ph" inputmode="tel" autocomplete="tel-national" placeholder="'+(pc?pc[6]:'Número de celular')+'" value="'+esc(C.num||'')+'"></div>'+
-      (seg?'':'<label class="flabel" for="em">¿Y tu correo? <span style="font-weight:400;color:var(--f-mut)">Opcional, ahí llega la invitación.</span></label><input class="finput" id="em" type="email" autocomplete="email" placeholder="nombre@mitienda.co" value="'+esc(C.mail||'')+'">')+
+      (seg?'':'<label class="flabel" for="em">¿Y tu correo?</label><input class="finput" id="em" type="email" autocomplete="email" placeholder="nombre@mitienda.co" value="'+esc(C.mail||'')+'">')+
       '<p class="ferr" id="er"></p><button class="fbtn" id="snd">'+(seg?'Enviar':'Ver horarios')+'</button><div class="fnav" style="padding-top:12px">'+backBtn+'</div>';
     ['fn','ph','em'].forEach(id=>{if($(id))$(id).addEventListener('input',()=>{$('er').textContent=''})});
     $('cc').addEventListener('change',e=>{const p=paisBy(e.target.value);$('ccb').classList.remove('vacio');$('ccf').textContent=p[4];$('ccv').textContent='+'+p[0];$('ph').placeholder=p[6];$('er').textContent='';$('ph').focus()});
@@ -237,7 +237,8 @@ function send(){const n=$('fn').value.trim(),iso=$('cc').value,p=iso?paisBy(iso)
   if(!n)m='Escribe tu nombre para continuar.';else if(!p)m='Elige el país de tu celular para continuar.';
   else if(p[5]&&t.length!==p[5]&&!(p[3]==='AR'&&t.length===11&&t[0]==='9'))m='Revisa el número: en '+p[2]+' el celular tiene '+p[5]+' dígitos, sin el +'+p[0]+'.';
   else if(!p[5]&&(t.length<6||t.length>14))m='Revisa el número: parece incompleto.';
-  else if(e&&!/^\S+@\S+\.\S+$/.test(e))m='Revisa el correo o déjalo vacío.';
+  else if($('em')&&!e)m='Escribe tu correo para continuar.';
+  else if(e&&!/^\S+@\S+\.\S+$/.test(e))m='Revisa el correo: parece incompleto.';
   if(m){$('er').textContent=m;return}
   C={nombre:n,pais:iso,num:t,tel:'+'+p[0]+' '+t,mail:e};AG=null;TOKEN=null;
   LEAD=api('lead',{respuestas:A,contacto:{nombre:n,tel:p[0]+t,mail:e,tz:p[1],pais:p[2]},origen:Object.entries(ORIGEN).map(([k,v])=>k+'='+v).join(' · ')});
