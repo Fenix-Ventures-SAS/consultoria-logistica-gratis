@@ -116,7 +116,8 @@ function parseReq(txt){const s=txt.toLowerCase().normalize('NFD').replace(/[̀-�
   return localToMs(day,hh,mm)}
 
 let A={},C={},hist=[],cur=-1,fin=null,timers=[],AG=null,LEAD=null,TOKEN=null,ULTIMO=null;
-const CARGA_MS=4500;
+// La pantalla de carga dura lo mismo que la animación de Dropi rodando (logos/dropi-rueda.webp: su GIF a 1,5x)
+const CARGA_MS=3800;
 // Llamada al servidor; si se cae la red o el servidor, se reintenta una vez
 async function api(ruta,datos){const una=async()=>{try{const r=await fetch('/api/'+ruta,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(datos),keepalive:true});const j=await r.json().catch(()=>({}));return {...j,status:r.status}}catch(e){return {ok:false,status:0}}};
   const r=await una();return r.status===0||r.status>=500?una():r}
@@ -150,7 +151,12 @@ const ICON=ic=>{if(ic.startsWith('img2:')){const [a,b]=ic.slice(5).split('|');re
 function cardsHTML(s){return '<div class="fcards'+(s.c3?' c3':'')+'">'+s.o.map(o=>'<button class="fc'+(arr(A[s.k]).includes(o[1])?' sel':'')+'"'+(s.m?' aria-pressed="'+arr(A[s.k]).includes(o[1])+'"':'')+' data-k="'+s.k+'" data-v="'+o[1]+'">'+ICON(o[2])+'<span class="lb">'+esc(o[0])+'</span></button>').join('')+'</div>'}
 // El total de preguntas se calcula sin la respuesta que se está eligiendo, así no cambia mientras la persona decide
 function counter(){const sin={...A};SCREENS[cur].forEach(x=>delete sin[x.k]);const ans=optim(sin);const qs=SCREENS.map((sc,i)=>i).filter(i=>scrVis(i,ans)&&isQ(SCREENS[i]));const n=qs.indexOf(cur)+1;return n>0?'<p class="fcount">Pregunta '+n+' de '+qs.length+'</p>':''}
-const nameOf=()=>(C.nombre||'').split(' ')[0];
+// Nombre para mostrar en pantalla (a GHL va tal cual): si viene todo en minúscula o todo en mayúscula,
+// cada palabra queda con mayúscula inicial, salvo de, del, la…
+const PARTICULAS=['de','del','la','las','los','y','e','da','das','do','dos','di','van','von'];
+function nombreVisible(){const n=(C.nombre||'').trim().replace(/\s+/g,' ');if(n!==n.toLowerCase()&&n!==n.toUpperCase())return n;
+  return n.toLowerCase().split(' ').map((w,i)=>i&&PARTICULAS.includes(w)?w:w.charAt(0).toUpperCase()+w.slice(1)).join(' ')}
+const nameOf=()=>nombreVisible().split(' ')[0];
 
 function agendaHTML(){const o=OUT[fin];const nm=nameOf();const pc0=country();const pais='hora de '+pc0[2]+(ZONA_CIUDAD[pc0[3]]?' ('+ZONA_CIUDAD[pc0[3]]+')':'');
   // Si el servidor no pudo guardar, se dice la verdad y se ofrece reintentar (nunca "ya tenemos tus datos")
@@ -221,15 +227,21 @@ function render(){const c=$('card');c.classList.remove('flood');
     [['sn','socio_nombre'],['sc','socio_correo'],['ic','invitado_correo']].forEach(([id,k])=>{if($(id))$(id).addEventListener('input',e=>{$('er').textContent='';const v=e.target.value.trim();if(v)A[k]=v;else delete A[k]})});
     $('cc').addEventListener('change',e=>{const p=paisBy(e.target.value);$('ccb').classList.remove('vacio');$('ccf').textContent=p[4];$('ccv').textContent='+'+p[0];$('ph').placeholder=p[6];$('er').textContent='';$('ph').focus()});
     $('snd').addEventListener('click',send);wire();return}
-  if(s.type==='reveal'){c.classList.add('flood');const nm=nameOf();const ini=(C.nombre||'?').split(' ').filter(Boolean).map(x=>x[0]).slice(0,2).join('').toUpperCase();
-    c.innerHTML='<div class="result vs"><div class="vsrow"><div class="vsm"><span class="vsc ini">'+esc(ini)+'</span><small>'+esc(nm||'Tú')+'</small></div><div class="vsp" id="vsp">0%</div><div class="vsm"><span class="vsc em"><img src="fenix-emblema.webp" alt=""></span><small>Perfil Fénix</small></div></div><p class="vss">Comparando con tiendas que ya escalaron</p><div class="vsbar"><i id="vsb"></i></div><p class="fq">Analizando tu operación</p><p class="fh">'+(nm?esc(nm)+', estamos':'Estamos')+' revisando si pasaste los últimos filtros</p><span class="vsdr">'+DROPI_ANIM+'</span></div>';
-    const T=RM?0:CARGA_MS,t0=performance.now();
+  if(s.type==='reveal'){c.classList.add('flood');const nm=nameOf(),completo=nombreVisible();
+    // Pantalla de carga (pedido de Daniel, 14-nov): logo de Fénix, nombre completo, porcentaje y Dropi, que entra rodando,
+    // se vuelve su logo y sale rodando. Cada vez empieza desde el principio (archivo guardado en memoria, ver precargarIconos).
+    const src=RM?'logos/dropi-rueda-quieto.webp':RUEDA?URL.createObjectURL(RUEDA):'logos/dropi-rueda.webp';
+    c.innerHTML='<div class="result"><img class="vslogo" src="fenix-emblema.webp" alt="Fénix Ventures">'+(completo?'<p class="vsn">'+esc(completo)+'</p>':'')+'<div class="vsp" id="vsp">0%</div><div class="vsbar"><i id="vsb"></i></div><p class="fq">Analizando tu operación</p><p class="fh">'+(nm?esc(nm)+', estamos':'Estamos')+' revisando si pasaste los últimos filtros</p><span class="rueda"><img id="rueda" src="'+src+'" alt="" width="1040" height="140"></span></div>';
     // Mientras corre la carga, el servidor crea el contacto en GHL y busca los horarios del consultor que le toca
-    const pendiente=LEAD;
-    const tick=()=>{if(!$('vsp'))return;const k=Math.min(1,(performance.now()-t0)/(T||1));$('vsp').textContent=Math.round(k*100)+'%';$('vsb').style.width=Math.round(k*100)+'%';if(k<1&&!fin)requestAnimationFrame(tick)};
-    if(T)requestAnimationFrame(tick);else{$('vsp').textContent='100%'}
-    timers.push(setTimeout(async()=>{const r=pendiente?await pendiente:null;if(LEAD!==pendiente||fin||!$('vsp'))return;
-      TOKEN=r&&r.ok?r.token:null;if(r&&r.ok)startAgenda(r.agenda||null);else AG={fallo:true};fin=outcome();render()},T));return}
+    const vsp=$('vsp'),vsb=$('vsb'),pendiente=LEAD;let t0=0,pc=-1,ya=false;
+    const tick=()=>{if(!vsp.isConnected)return;const k=Math.min(1,(performance.now()-t0)/CARGA_MS),v=Math.round(k*100);
+      if(v!==pc){pc=v;vsp.textContent=v+'%';vsb.style.width=v+'%'}if(k<1)requestAnimationFrame(tick)};
+    const seguir=async()=>{const r=pendiente?await pendiente:null;if(src.startsWith('blob:'))URL.revokeObjectURL(src);if(LEAD!==pendiente||fin||!vsp.isConnected)return;
+      TOKEN=r&&r.ok?r.token:null;if(r&&r.ok)startAgenda(r.agenda||null);else AG={fallo:true};fin=outcome();render()};
+    if(RM){vsp.textContent='100%';vsb.style.width='100%';timers.push(setTimeout(seguir,0));return}
+    // El conteo arranca cuando Dropi ya se puede ver, así el 100 % llega justo cuando sale rodando (si tarda más de 1,5 s, arranca igual)
+    const arrancar=()=>{if(ya||!vsp.isConnected)return;ya=true;t0=performance.now();requestAnimationFrame(tick);timers.push(setTimeout(seguir,CARGA_MS))};
+    $('rueda').decode().then(arrancar,arrancar);timers.push(setTimeout(arrancar,1500));return}
   if(s.type==='message'){
     c.innerHTML='<div class="result"><span class="msg-logo">'+DROPI_ANIM+'</span><p class="fq">'+esc(s.q)+'</p><p class="msg">'+esc(s.h)+'</p><button class="fbtn" id="cont">Continuar</button></div><div class="fnav">'+backBtn+'</div>';
     $('cont').addEventListener('click',advance);wire();return}
@@ -263,7 +275,10 @@ function precargarIconos(){const urls=new Set();
     if(ic.startsWith('img2:'))ic.slice(5).split('|').forEach(u=>urls.add(u));
     else if(ic.startsWith('img:'))urls.add(ic.slice(4))}));
   urls.add(RM?'logos/dropi-afirma-quieto.webp':'logos/dropi-afirma.webp');
+  // Dropi rodando se guarda en memoria: cada vez que sale la pantalla de carga se muestra como imagen nueva y corre desde el principio
+  if(RM)urls.add('logos/dropi-rueda-quieto.webp');else fetch('logos/dropi-rueda.webp').then(r=>r.ok?r.blob():null).then(b=>{RUEDA=b}).catch(()=>{});
   urls.forEach(u=>{const i=new Image();i.decoding='async';i.src=u})}
+let RUEDA=null;
 let iconosPrecargados=false;
 // Logo animado de la portada (13-nov, pedido de Daniel): el fénix vuela y forma el logo, una vez por visita.
 // Si no le convence, la alternativa sobria es el brillo de sol de la rama logo-sol.
@@ -274,7 +289,7 @@ function animarLogo(){const cn=navigator.connection;if(animLogo||RM||(cn&&(cn.sa
   const im=new Image();im.className='anim';im.alt='';im.decoding='async';im.src='logos/fenix-anima.webp';
   im.decode().then(()=>{const e=document.querySelector('.cover .emb');if(cur!==-1||!e)return;e.appendChild(im);
     setTimeout(()=>im.classList.add('fuera'),4500);setTimeout(()=>im.remove(),5200)}).catch(()=>{})}
-// Anti-robots de Cloudflare (Turnstile): casi siempre invisible; solo pide un clic si ve algo sospechoso.
+// Anti-robots de Cloudflare (Turnstile), en modo invisible desde el panel de Cloudflare: nunca se ve. Si duda, el lead entra igual con la etiqueta revisar-antirobots.
 // Se carga al empezar, así el permiso está listo cuando la persona deja sus datos.
 const TS_KEY='0x4AAAAAAF-8NxKnzOw1XekY';let tsId=null,tsTok=null,tsFallo=false;const tsEspera=[];
 function cargarTS(){if(window.tsListo)return;

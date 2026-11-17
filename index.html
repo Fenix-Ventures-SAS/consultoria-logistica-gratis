@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="robots" content="noindex, nofollow">
 <title>Consultoría Logística Gratis | Fénix Ventures</title>
@@ -126,16 +126,15 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .fbody.flood{background:#085530;color:#fff}
 .fbody.flood .fq{color:#fff}
 .fbody.flood .fh{color:#d9eee2}
-.vsrow{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:14px}
-.vsm{display:flex;flex-direction:column;align-items:center;gap:6px}
-.vsm small{font-size:11.5px;color:#d9eee2;letter-spacing:.04em}
-.vsc{width:58px;height:58px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:26px}
-.vsc.em img{width:58px;height:58px}
-.vsdr{display:block;width:58px;height:58px;margin:42px auto 0}
-.vsp{font-family:var(--display);font-size:24px;color:#f5c21b;min-width:3.2ch;text-align:center;font-variant-numeric:tabular-nums}
-.vss{font-size:12.5px;color:#d9eee2;margin:0 0 10px}
+/* Pantalla de carga: logo de Fénix, nombre completo, porcentaje, barra, textos y Dropi rodando */
+.vslogo{display:block;width:80px;height:80px;margin:0 auto 14px}
+.vsn{font-family:var(--display);font-size:19px;line-height:1.25;color:#fff;margin:0 auto 4px;max-width:24ch;text-wrap:balance;overflow-wrap:anywhere}
+.vsp{font-family:var(--display);font-size:24px;line-height:1.25;color:#f5c21b;margin:0 0 10px;font-variant-numeric:tabular-nums}
 .vsbar{height:4px;background:rgba(255,255,255,.25);border-radius:2px;overflow:hidden;margin:0 auto 18px;max-width:220px}
 .vsbar i{display:block;height:100%;width:0;background:#f5c21b}
+/* La franja de Dropi va de borde a borde de la tarjeta (anula el margen de los lados): entra y sale rodando por los bordes */
+.rueda{display:block;margin:14px -24px 0}
+.rueda img{display:block;width:100%;height:auto}
 .ic.im{overflow:visible}
 .ic.im img{width:34px;height:34px;object-fit:contain}
 /* Las imágenes 3D traen aire alrededor: van un poco más grandes que los logos para verse del mismo tamaño */
@@ -177,7 +176,6 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .calt{display:block;width:100%;margin:0 0 6px;padding:8px;border:1px solid #006bff;color:#006bff;background:#fff;border-radius:8px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .calt:hover{background:#006bff;color:#fff}
 .cald small{font-size:12px;color:var(--f-mut)}
-.vsc.ini{font-family:var(--display);font-size:20px;color:#0b6b3a}
 @media (prefers-reduced-motion: reduce){.fprog i,.fc{transition:none}}
 /* ---- Compactado para pantallas bajas (lo activa ajustar() en app.js solo si la pantalla no cabe) ---- */
 .k1 .fhead{padding:12px 16px}
@@ -209,6 +207,10 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .k1 .badge-ico{margin-bottom:10px}
 .k1 .cover .fq{font-size:22px}
 .k1 .trust{margin-top:12px}
+.k1 .vslogo{width:64px;height:64px;margin-bottom:10px}
+.k1 .vsn{font-size:17.5px}
+.k1 .vsbar{margin-bottom:12px}
+.k1 .rueda{margin:10px -20px 0}
 .k2 .fhead{padding:9px 14px}
 .k2 .fbody{padding:14px 16px 10px}
 .k2 .fq{font-size:17.5px;line-height:1.24}
@@ -226,6 +228,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 .k2 .slot{padding:7px 11px;font-size:13.5px}
 .k2 .calt{padding:5px;font-size:12.5px}
 .k2 .cover .fq{font-size:20px}
+.k2 .rueda{margin:8px -16px 0}
 
 /* Página real: el formulario ocupa toda la pantalla en celular y va centrado en computador */
 html,body{height:100%}
@@ -238,7 +241,7 @@ main{display:flex;justify-content:center;width:100%}
 /* Celulares angostos (320-370 px): el encabezado no se parte */
 .fhead .partner>span{white-space:nowrap}
 @media (max-width:389px){.fhead{gap:10px;padding:14px 10px}.fhead .fword{font-size:19px}.fhead .partner{font-size:8.5px;gap:7px}.fhead .partner img{height:24px}}
-@media (max-width:350px){.fhead{gap:8px}.fhead .fword{font-size:16.5px}.fhead .partner{font-size:7.5px;gap:6px}.fhead .partner img{height:21px}.fbody{padding:22px 16px 18px}.trust{font-size:15px;gap:8px}.trust svg{width:21px;height:21px}.trust img{height:18px}}
+@media (max-width:350px){.fhead{gap:8px}.fhead .fword{font-size:16.5px}.fhead .partner{font-size:7.5px;gap:6px}.fhead .partner img{height:21px}.fbody{padding:22px 16px 18px}.rueda{margin-left:-16px;margin-right:-16px}.trust{font-size:15px;gap:8px}.trust svg{width:21px;height:21px}.trust img{height:18px}}
 </style>
 </head>
 <body>
