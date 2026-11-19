@@ -7,7 +7,7 @@
    Agenda con las reglas de Sofía (flujos KAd4A y knRiI): consultor por ventas diarias, 36 h sin domingos ni
    festivos, mínimo 90 min de anticipación, a la misma hora desempata el orden de prioridad. */
 
-import { FUENTES, NOMBRE_NUEVO } from '../index.js';
+import { FUENTES, NOMBRE_NUEVO, EXTRAS } from '../index.js';
 
 const GHL = 'https://services.leadconnectorhq.com';
 const LOC = '04Ruck2fFcV5VVehGEaY';
@@ -211,6 +211,10 @@ function etiquetaDe(request) {
   if (!m) return 'form-pruebas';
   return NOMBRE_NUEVO[m[1]] || m[1];
 }
+// Etiquetas del lead en GHL: la de su dirección, las de más que tenga esa fuente (EXTRAS) y, si Cloudflare dudó, la de revisar
+const etiquetasLead = (etiqueta, verificado) => [etiqueta, ...((EXTRAS[etiqueta] || {}).etiquetas || []), ...(verificado ? [] : ['revisar-antirobots'])];
+// Línea que va al principio de las notas del lead según su fuente (vacía si la fuente no tiene)
+const lineaExtra = etiqueta => (EXTRAS[etiqueta] || {}).nota || '';
 
 /* ---------- notas ---------- */
 function horaLocal(ms, tz, pais) {
@@ -225,6 +229,7 @@ function notaRespuestas(r, c, etiqueta, origen, tier, parcial, verificado = true
   const lista = (k, v) => [].concat(v).map(x => OPC[k][x]).join(', ');
   const fuente = FUENTES[etiqueta] || 'Pruebas';
   const filas = [
+    ...(lineaExtra(etiqueta) ? [lineaExtra(etiqueta)] : []),
     '📝 FORMULARIO WEB · Consultoría Logística Gratis',
     'Entró por: ' + etiqueta + '.fenixventures.co (' + fuente + ')',
     'Resultado: ' + (r.seguimiento ? 'SEGUIMIENTO (vende menos de 20 al día y ya tiene chatbot; no se le ofreció agenda)' : tier + (parcial ? '' : ' · se le mostró la agenda')),
@@ -402,7 +407,7 @@ async function lead(request, env, cuerpo) {
   ]);
   let ct = dup.ok && dup.data.contact && dup.data.contact.id ? dup.data.contact : null, nuevo = false;
   if (!ct) {
-    const base = { locationId: LOC, phone: c.tel, ...nombre, source: 'Formulario web ' + etiqueta, tags: verificado ? [etiqueta] : [etiqueta, 'revisar-antirobots'] };
+    const base = { locationId: LOC, phone: c.tel, ...nombre, source: 'Formulario web ' + etiqueta, tags: etiquetasLead(etiqueta, verificado) };
     let cr = await ghl(env, '/contacts/', { method: 'POST', body: c.mail ? { ...base, email: c.mail } : base });
     if (!cr.ok && c.mail) cr = await ghl(env, '/contacts/', { method: 'POST', body: base }); // el correo ya es de otro contacto
     if (cr.ok && cr.data.contact && cr.data.contact.id) { ct = cr.data.contact; nuevo = true; }
@@ -426,8 +431,8 @@ async function lead(request, env, cuerpo) {
     ? ghl(env, '/contacts/' + cid + '/notes/' + notaPrevia, { method: 'PUT', body: { body: texto } }).then(x => x.ok ? x : crearNota())
     : crearNota()];
   if (!nuevo) {
-    // 3. Contacto que ya existía: etiqueta del subdominio (se suma a las que tenga) y solo lo vacío
-    tareas.push(ghl(env, '/contacts/' + cid + '/tags', { method: 'POST', body: { tags: verificado ? [etiqueta] : [etiqueta, 'revisar-antirobots'] } }));
+    // 3. Contacto que ya existía: etiqueta del subdominio y las de su fuente (se suman a las que tenga) y solo lo vacío
+    tareas.push(ghl(env, '/contacts/' + cid + '/tags', { method: 'POST', body: { tags: etiquetasLead(etiqueta, verificado) } }));
     const vacio = v => !v || /^[\d\s+().-]+$/.test(String(v).trim());
     const relleno = vacio(ct.firstName) && vacio(ct.lastName) ? { ...nombre } : {};
     if (c.mail && !ct.email) relleno.email = c.mail;
@@ -524,7 +529,7 @@ async function agendar(request, env, cuerpo, enFondo) {
   }
   await Promise.all([
     T.o && I ? ghl(env, '/opportunities/' + T.o, { method: 'PUT', body: { pipelineId: I.pipeline, pipelineStageId: I.agendado, status: 'open' } }) : null,
-    ghl(env, '/contacts/' + T.c + '/notes', { method: 'POST', body: { body: '📆 AGENDÓ DESDE EL FORMULARIO WEB' + (T.sv ? ' (⚠️ revisar: no pasó el anti-robots)' : '') + '\nCon: ' + CAL[cl].nombre + ' (' + T.t + ')\nHora Colombia: ' + horaLocal(ms, 'America/Bogota', 'Colombia') + '\nHora del lead: ' + hora + (conInvitados
+    ghl(env, '/contacts/' + T.c + '/notes', { method: 'POST', body: { body: (lineaExtra(etiquetaDe(request)) ? lineaExtra(etiquetaDe(request)) + '\n' : '') + '📆 AGENDÓ DESDE EL FORMULARIO WEB' + (T.sv ? ' (⚠️ revisar: no pasó el anti-robots)' : '') + '\nCon: ' + CAL[cl].nombre + ' (' + T.t + ')\nHora Colombia: ' + horaLocal(ms, 'America/Bogota', 'Colombia') + '\nHora del lead: ' + hora + (conInvitados
       ? '\nInvitados de la cita (quedan en la invitación de Google con el Meet): ' + guests.map(g => g.fullName + ' <' + g.email + '>').join(', ')
       : T.i ? '\nInvitar también a la reunión: ' + limpio(T.i, 300) + ' (agrégalos a la invitación)' : '') } })
   ]);
