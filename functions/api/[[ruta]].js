@@ -234,6 +234,7 @@ function notaRespuestas(r, c, etiqueta, origen, tier, parcial, verificado = true
     'Entró por: ' + etiqueta + '.fenixventures.co (' + fuente + ')',
     'Resultado: ' + (r.seguimiento ? 'SEGUIMIENTO (vende menos de 20 al día y ya tiene chatbot; no se le ofreció agenda)' : tier + (parcial ? '' : ' · se le mostró la agenda')),
     ...(parcial ? ['⚠️ DEJÓ SUS DATOS PERO NO TOCÓ «' + (r.seguimiento ? 'Enviar' : 'Ver horarios') + '»: hay que escribirle o llamarlo.'] : []),
+    ...(r.seguimiento && !parcial && (EXTRAS[etiqueta] || {}).videos ? ['📺 AÚN NO APLICA PARA LA CONSULTORÍA: el formulario le dio los videos de logística → ' + EXTRAS[etiqueta].videos] : []),
     ...(verificado ? [] : ['⚠️ REVISAR: Cloudflare no pudo confirmar que sea una persona (puede ser un robot).']),
     '',
     'Nombre: ' + c.nombre,
@@ -289,7 +290,7 @@ async function base(env) {
 }
 const SESION_OK = /^[a-z0-9]{8,32}$/;
 const TIPOS_EV = new Set(['pantalla', 'empezar', 'respuesta', 'desliza', 'atras', 'error', 'resultado', 'datos', 'guardado', 'agenda', 'horario',
-  'otro', 'texto', 'respaldo', 'agendado', 'ocupado', 'agenda_error', 'reintentar', 'reinicio', 'clic_vacio', 'salida', 'volver', 'parcial']);
+  'otro', 'texto', 'respaldo', 'agendado', 'ocupado', 'agenda_error', 'reintentar', 'reinicio', 'clic_vacio', 'salida', 'volver', 'parcial', 'videos']);
 
 /* ---------- POST /api/evento ---------- */
 async function evento(request, env, cuerpo) {

@@ -68,9 +68,13 @@ seguimiento:{label:'Gracias por contactarnos.',msg:'Tristemente para nosotros, n
 b3:{kind:'ok',dur:'llamada de 15 minutos para automatizar tu atención'},
 b2:{kind:'ok',dur:'consultoría logística gratuita de 30 minutos'},
 b1:{kind:'ok',dur:'consultoría logística gratuita de 30 minutos'}};
+// Direcciones con algo propio (el resto del formulario es igual en todas). form-dropkilleradv (pedido de Daniel, 19-nov-2026):
+// a todo el que quede descalificado se le dice que aún no aplica para la consultoría y se le dan los videos de logística
+const VIDEOS={'form-dropkilleradv':'https://drive.google.com/drive/folders/1L_lTqbOsIjZYpgSTVa3S7bVLS3IXi_oL'}[location.hostname.split('.')[0]]||'';
 const ICO={chev:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',ok:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 warn:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v6M12 16.5v.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
 no:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 12h10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 7.3v9.4l7.3-4.7z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>',
 gift:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="8.5" width="17" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 12.5v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7M12 8.5v12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 8.5C10.6 5.2 7 4.6 7 6.6S10 8.5 12 8.5zM12 8.5c1.4-3.3 5-3.9 5-1.9S14 8.5 12 8.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
 cal:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
 pen:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>'};
@@ -208,6 +212,10 @@ function render(){const c=$('card');c.classList.remove('flood');
       if($('again'))$('again').addEventListener('click',reset);
       if($('reint'))$('reint').addEventListener('click',()=>{ev('reintentar');LEAD=guardar();fin=null;AG=null;render()});return}
     const k=KIND[o.kind];const nm=nameOf();
+    // Descalificado en una dirección con videos: aún no aplica, pero se lleva los videos de logística y sabe cuándo volver
+    if(VIDEOS){const cuando=o.msg.split('\n\n').slice(1).join(' ');
+      c.innerHTML='<div class="result"><div class="badge-ico" style="background:'+KIND.ok[0]+';color:'+KIND.ok[1]+'">'+ICO.play+'</div><p class="fq">'+(nm?esc(nm)+', aún':'Aún')+' no aplicas para la consultoría</p><p class="msg">Pero no te preocupes 💚 Mientras tanto, puedes ir viendo estos videos para mejorar tu logística.</p><a class="fbtn" id="videos" href="'+VIDEOS+'" target="_blank" rel="noopener">Ver los videos</a><p class="msg cuando">'+esc(cuando)+'</p><button class="flink" id="again">Volver a empezar</button></div>';
+      $('videos').addEventListener('click',()=>ev('videos',null,fin));$('again').addEventListener('click',reset);return}
     c.innerHTML='<div class="result"><div class="badge-ico" style="background:'+k[0]+';color:'+k[1]+'">'+ICO[o.kind]+'</div><p class="fq">'+esc(o.label)+'</p><p class="msg">'+esc(o.msg).replace(/\n/g,'<br>')+'</p><button class="flink" id="again">Volver a empezar</button></div>';
     $('again').addEventListener('click',reset);return}
   if(cur===-1){c.innerHTML='<div class="cover"><div class="emb"><img src="fenix-emblema.webp" alt="Fénix Ventures"></div><div><p class="fq">Consultoría Logística Gratis</p><p class="fh" style="font-size:14.5px;line-height:1.6">Responde unas preguntas rápidas.<br>Empieza y vemos si quedas elegido.</p><button class="fbtn" id="go">Empezar</button><p class="trust">'+ICO.gift+'Obsequio de <img src="dropi-logo.webp" alt="Dropi"></p></div><div class="cend"></div></div>';
