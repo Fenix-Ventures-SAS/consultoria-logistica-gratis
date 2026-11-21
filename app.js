@@ -3,6 +3,13 @@
 if(window.top!==window.self){try{window.top.location=window.location.href}catch(e){document.documentElement.style.display='none'}}
 // Origen del clic: UTM, fbclid e ids de Meta del enlace. Va en la nota del contacto en GHL.
 // La fuente (etiqueta formevon, formpmeta…) la pone el servidor según el subdominio por el que entró.
+// Píxel de Meta, solo en la dirección de pauta de Meta (pedido de Daniel, 21-nov-2026): es el código oficial que entregó,
+// cargado desde aquí porque la seguridad de la página no permite código suelto en el HTML. Por ahora solo manda PageView.
+const PIXEL_META={'form-p-meta':'1916521899372619'}[location.hostname.split('.')[0]]||'';
+if(PIXEL_META){!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+  s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init',PIXEL_META);fbq('track','PageView')}
 const ORIGEN=(()=>{const q=new URLSearchParams(location.search),o={};['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid','campaign_id','adset_id','ad_id'].forEach(k=>{const v=q.get(k);if(v)o[k]=v.slice(0,300)});return o})();
 /* Medición del recorrido, sin datos personales: pantallas, respuestas, errores, clics fuera de botones y salida.
    Va a la base de visitas de Cloudflare (/api/evento) para estudiar dónde avanza y dónde se va cada persona. */
