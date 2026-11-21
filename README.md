@@ -18,7 +18,14 @@ Formulario de calificación de Fénix Ventures, la vertical logística de Dropi.
       - Si GHL rechaza la cita por los invitados, se crea sin ellos y la nota pide agregarlos a mano.
 
 - `index.html` (estructura y estilos) y `app.js` (preguntas, lógica y agenda) son todo el código, sin librerías externas.
-- **Píxel de Meta** (pedido de Daniel, 21-nov-2026): solo en form-p-meta, píxel `1916521899372619` (`PIXEL_META` en app.js). Es el código oficial que entregó Daniel, cargado desde app.js porque la seguridad de la página no permite código suelto en el HTML. La política de la página permite `connect.facebook.net` (script) y `www.facebook.com` (envíos). Por ahora solo manda PageView, más los eventos automáticos de Meta (toques en botones, `SubscribedButtonClick`), que se apagan en el Administrador de eventos. La coincidencia avanzada automática está apagada en ese píxel, así que no lee los datos que se escriben. Las demás direcciones no cargan nada de Meta. La escalera de eventos (`Filtro_1` → `Lead_Valido` → `Lead_Calificado` → `Schedule`) está pendiente.
+- **Píxel de Meta** (pedido de Daniel, 21-nov-2026): solo en form-p-meta, píxel `1916521899372619` (`PIXEL_META` en app.js). Es el código oficial que entregó Daniel, cargado desde app.js porque la seguridad de la página no permite código suelto en el HTML. La política de la página permite `connect.facebook.net` (script) y `www.facebook.com` (envíos). Manda PageView al abrir y la escalera de eventos (21-nov-2026, `pix` en app.js), cada uno una vez por visita y con `eventID` = visita + evento para no duplicarlo si algún día lo manda también el servidor:
+    - `Filtro_1` (personalizado): al llegar a «¡Pasaste el primer filtro!».
+    - `Lead_Valido` (personalizado): calificó (B1, B2 o B3) y sus datos se guardaron.
+    - `Lead_Calificado` (personalizado): calificó con 20 o más pedidos (B1 o B2).
+    - `Calificado_B1`, `Calificado_B2` o `Calificado_B3` (personalizados): su nivel.
+    - `Schedule` (estándar): agendó (no si ya tenía cita).
+    - Descartados y seguimiento: solo PageView (los de seguimiento también `Filtro_1`).
+    - Los eventos automáticos de botones de Meta (`SubscribedButtonClick`) están apagados en el código (`autoConfig` en falso). La coincidencia avanzada automática está apagada en ese píxel. Las demás direcciones no cargan nada de Meta.
 - **Logo animado de la portada** (`logos/fenix-anima.webp`, 180 KB):
   - Son los primeros 5 s del video del fénix que entregó Daniel el 13-nov-2026: el fénix vuela, forma el logo, sale un destello y quedan chispas.
   - El logo queda quieto, sin el fondo oscuro del video, y la animación va pintada sobre el verde de la portada a 12 cuadros por segundo.

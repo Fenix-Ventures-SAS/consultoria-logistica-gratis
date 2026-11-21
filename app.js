@@ -4,16 +4,23 @@ if(window.top!==window.self){try{window.top.location=window.location.href}catch(
 // Origen del clic: UTM, fbclid e ids de Meta del enlace. Va en la nota del contacto en GHL.
 // La fuente (etiqueta formevon, formpmeta…) la pone el servidor según el subdominio por el que entró.
 // Píxel de Meta, solo en la dirección de pauta de Meta (pedido de Daniel, 21-nov-2026): es el código oficial que entregó,
-// cargado desde aquí porque la seguridad de la página no permite código suelto en el HTML. Por ahora solo manda PageView.
+// cargado desde aquí porque la seguridad de la página no permite código suelto en el HTML. Manda PageView y la escalera de
+// eventos (ver pix); los toques automáticos de botones de Meta se apagan para que solo lleguen las etapas reales.
 const PIXEL_META={'form-p-meta':'1916521899372619'}[location.hostname.split('.')[0]]||'';
 if(PIXEL_META){!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
   if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
   s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-  fbq('init',PIXEL_META);fbq('track','PageView')}
+  fbq('set','autoConfig',false,PIXEL_META);fbq('init',PIXEL_META);fbq('track','PageView')}
 const ORIGEN=(()=>{const q=new URLSearchParams(location.search),o={};['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid','campaign_id','adset_id','ad_id'].forEach(k=>{const v=q.get(k);if(v)o[k]=v.slice(0,300)});return o})();
 /* Medición del recorrido, sin datos personales: pantallas, respuestas, errores, clics fuera de botones y salida.
    Va a la base de visitas de Cloudflare (/api/evento) para estudiar dónde avanza y dónde se va cada persona. */
 const SES=Array.from(crypto.getRandomValues(new Uint8Array(10)),b=>b.toString(36).padStart(2,'0')).join('');
+// Escalera de eventos del píxel de Meta (pedido de Daniel, 21-nov-2026): Filtro_1 → Lead_Valido → Lead_Calificado → Schedule,
+// más Calificado_B1/B2/B3. Cada uno una sola vez por visita y con un id fijo, para que no se cuente doble si algún día
+// también lo manda el servidor (API de conversiones). Solo donde hay píxel.
+const PIX_YA=new Set();
+function pix(ev,estandar){if(!PIXEL_META||PIX_YA.has(ev)||typeof fbq!=='function')return;PIX_YA.add(ev);
+  fbq(estandar?'track':'trackCustom',ev,{},{eventID:SES+'-'+ev})}
 const META={o:Object.entries(ORIGEN).map(([k,v])=>k+'='+v).join(' · ').slice(0,200),w:screen.width+'x'+screen.height,
   r:(()=>{try{return document.referrer?new URL(document.referrer).hostname:''}catch(e){return ''}})()};
 let colaEv=[],pasoAct='',tPaso=performance.now();
@@ -188,7 +195,7 @@ function agendaHTML(){const o=OUT[fin];const nm=nameOf();const pc0=country();con
 async function book(ms,cl){if(AG.busy)return;AG.busy=true;render();
   const pos=AG.mode==='respaldo'?'respaldo':'opción '+(AG.list.findIndex(x=>x.ms===ms)+1);ev('horario','agenda',pos+' · en '+Math.round((ms-Date.now())/36e5)+' h');
   const r=await api('agendar',{token:TOKEN,ms,cl});if(!AG)return;AG.busy=false;
-  if(r.ok){ev(r.ya?'agenda_error':'agendado','agenda',r.ya?'ya tenía cita':cl);AG.booked={ms:r.ms,ya:!!r.ya};render();return}
+  if(r.ok){ev(r.ya?'agenda_error':'agendado','agenda',r.ya?'ya tenía cita':cl);AG.booked={ms:r.ms,ya:!!r.ya};if(!r.ya)pix('Schedule',true);render();return}
   if(r.status===409&&r.agenda){ev('ocupado','agenda');startAgenda(r.agenda);AG.note='Ese horario se acaba de ocupar. Elige otro.';render();return}
   ev('agenda_error','agenda',r.error||r.status);
   AG.note='No pudimos agendar en este momento. Ya tenemos tus datos: un consultor te escribe por WhatsApp para confirmar tu cita.';render()}
@@ -212,7 +219,9 @@ function render(){const c=$('card');c.classList.remove('flood');
   // Portada en verde oscuro; de la primera pregunta en adelante, fondo beige muy claro
   $('fcard').classList.toggle('osc',cur<0&&!fin);
   if(fin){const o=OUT[fin];
-    if(['b1','b2','b3'].includes(fin)){if(!AG)startAgenda(null);c.innerHTML=agendaHTML();
+    if(['b1','b2','b3'].includes(fin)){if(!AG)startAgenda(null);
+      if(!AG.fallo){pix('Lead_Valido');if(fin!=='b3')pix('Lead_Calificado');pix('Calificado_'+fin.toUpperCase())}
+      c.innerHTML=agendaHTML();
       c.querySelectorAll('.slot[data-ms],.calt').forEach(b=>b.addEventListener('click',()=>book(+b.dataset.ms,b.dataset.cl)));
       if($('oth'))$('oth').addEventListener('click',()=>{if(AG.mode!=='other')ev('otro','agenda');AG.mode=AG.mode==='other'?'list':'other';render();if($('othtxt'))$('othtxt').focus()});
       if($('othgo')){$('othgo').addEventListener('click',searchOther);$('othtxt').addEventListener('keydown',e=>{if(e.key==='Enter')searchOther()})}
@@ -257,7 +266,7 @@ function render(){const c=$('card');c.classList.remove('flood');
     // El conteo arranca cuando Dropi ya se puede ver, así el 100 % llega justo cuando sale rodando (si tarda más de 1,5 s, arranca igual)
     const arrancar=()=>{if(ya||!vsp.isConnected)return;ya=true;t0=performance.now();requestAnimationFrame(tick);timers.push(setTimeout(seguir,CARGA_MS))};
     $('rueda').decode().then(arrancar,arrancar);timers.push(setTimeout(arrancar,1500));return}
-  if(s.type==='message'){
+  if(s.type==='message'){if(s.k==='vas_bien')pix('Filtro_1');
     c.innerHTML='<div class="result"><span class="msg-logo">'+DROPI_ANIM+'</span><p class="fq">'+esc(s.q)+'</p><p class="msg">'+esc(s.h)+'</p><button class="fbtn" id="cont">Continuar</button></div><div class="fnav">'+backBtn+'</div>';
     $('cont').addEventListener('click',advance);wire();return}
   if(s.type==='slider'){const v=A.ventas!==undefined?A.ventas:s.def;
