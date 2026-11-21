@@ -25,7 +25,8 @@ Formulario de calificación de Fénix Ventures, la vertical logística de Dropi.
     - `Calificado_B1`, `Calificado_B2` o `Calificado_B3` (personalizados): su nivel.
     - `Schedule` (estándar): agendó (no si ya tenía cita).
     - Descartados y seguimiento: solo PageView (los de seguimiento también `Filtro_1`).
-    - Los eventos automáticos de botones de Meta (`SubscribedButtonClick`) están apagados en el código (`autoConfig` en falso). La coincidencia avanzada automática está apagada en ese píxel. Las demás direcciones no cargan nada de Meta.
+    - Coincidencia avanzada manual (21-nov-2026, `pixDatos`): al tocar «Ver horarios», el píxel recibe solo el correo y el WhatsApp del lead (con indicativo), nunca los del socio ni el invitado, y los cifra antes de enviarlos. Van en `Lead_Valido`, `Lead_Calificado`, `Calificado_*` y `Schedule`; `PageView` y `Filtro_1` salen sin datos. Complementa al píxel: si Meta no reconoce los datos, el evento cuenta igual.
+    - Los eventos automáticos de botones de Meta (`SubscribedButtonClick`) están apagados en el código (`autoConfig` en falso). La coincidencia avanzada automática de Meta debe seguir apagada: leería el WhatsApp sin indicativo y podría tomar el correo del socio o del invitado. Las demás direcciones no cargan nada de Meta.
 - **Logo animado de la portada** (`logos/fenix-anima.webp`, 180 KB):
   - Son los primeros 5 s del video del fénix que entregó Daniel el 13-nov-2026: el fénix vuela, forma el logo, sale un destello y quedan chispas.
   - El logo queda quieto, sin el fondo oscuro del video, y la animación va pintada sobre el verde de la portada a 12 cuadros por segundo.

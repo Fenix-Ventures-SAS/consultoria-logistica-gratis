@@ -21,6 +21,12 @@ const SES=Array.from(crypto.getRandomValues(new Uint8Array(10)),b=>b.toString(36
 const PIX_YA=new Set();
 function pix(ev,estandar){if(!PIXEL_META||PIX_YA.has(ev)||typeof fbq!=='function')return;PIX_YA.add(ev);
   fbq(estandar?'track':'trackCustom',ev,{},{eventID:SES+'-'+ev})}
+// Coincidencia avanzada manual (pedido de Daniel, 21-nov-2026): al tocar «Ver horarios», el píxel recibe solo el correo y el
+// WhatsApp del lead (con indicativo, solo números), nunca los del socio ni el invitado. El píxel los cifra antes de enviarlos
+// y van en los eventos que salen después (Lead_Valido, Lead_Calificado, Calificado_*, Schedule).
+function pixDatos(d){if(!PIXEL_META||typeof fbq!=='function'||!d.p)return;const ud={};
+  if(d.e)ud.em=d.e.trim().toLowerCase();const ph=String(d.p[0]+d.t).replace(/\D/g,'');if(ph.length>=8)ud.ph=ph;
+  if(ud.em||ud.ph)fbq('init',PIXEL_META,ud)}
 const META={o:Object.entries(ORIGEN).map(([k,v])=>k+'='+v).join(' · ').slice(0,200),w:screen.width+'x'+screen.height,
   r:(()=>{try{return document.referrer?new URL(document.referrer).hostname:''}catch(e){return ''}})()};
 let colaEv=[],pasoAct='',tPaso=performance.now();
@@ -352,7 +358,7 @@ function send(){const d=leerDatos(),m=d.m||d.mc;
   ['socio_nombre','socio_correo','invitado_correo'].forEach(k=>{if(A[k])ev('respuesta',k,'lleno')});
   clearTimeout(tParcial);C={nombre:d.n,pais:d.iso,num:d.t,tel:'+'+d.p[0]+' '+d.t,mail:d.e};AG=null;TOKEN=null;
   ULTIMO={respuestas:A,contacto:d.contacto,origen:META.o,s:SES};
-  ev('datos','contacto',d.iso);LEAD=guardar();
+  ev('datos','contacto',d.iso);pixDatos(d);LEAD=guardar();
   advance()}
 // Si deja nombre y WhatsApp válidos pero no toca el botón, igual quedan en GHL para contactarlo:
 // se guardan al salir o cambiar de pestaña, o tras 40 s sin escribir. Si después toca el botón, se completa la misma nota.
