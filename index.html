@@ -101,6 +101,8 @@ body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px
 /* Botón que es enlace (videos para los descalificados de form-dropkilleradv) y el «cuándo volver» de debajo */
 a.fbtn{display:block;text-align:center;text-decoration:none}
 .result p.msg.cuando{font-size:13px;line-height:1.55;margin:16px auto 10px}
+/* Mensaje del curso: renglones parejos, sin una palabra sola al final */
+.result p.msg.curso span{display:block;text-wrap:balance}
 .fcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
 .fcards .fc:last-child:nth-child(odd){grid-column:1/-1}
 /* Lista de chatbots: 3 columnas para que quepa sin bajar; la última sola ocupa toda la fila */

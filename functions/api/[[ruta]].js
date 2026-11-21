@@ -234,7 +234,7 @@ function notaRespuestas(r, c, etiqueta, origen, tier, parcial, verificado = true
     'Entró por: ' + etiqueta + '.fenixventures.co (' + fuente + ')',
     'Resultado: ' + (r.seguimiento ? 'SEGUIMIENTO (vende menos de 20 al día y ya tiene chatbot; no se le ofreció agenda)' : tier + (parcial ? '' : ' · se le mostró la agenda')),
     ...(parcial ? ['⚠️ DEJÓ SUS DATOS PERO NO TOCÓ «' + (r.seguimiento ? 'Enviar' : 'Ver horarios') + '»: hay que escribirle o llamarlo.'] : []),
-    ...(r.seguimiento && !parcial && (EXTRAS[etiqueta] || {}).videos ? ['📺 AÚN NO APLICA PARA LA CONSULTORÍA: el formulario le dio los videos de logística → ' + EXTRAS[etiqueta].videos] : []),
+    ...(r.seguimiento && !parcial && (EXTRAS[etiqueta] || {}).videos ? ['📺 AÚN NO APLICA PARA LA CONSULTORÍA: el formulario le dio acceso al curso de logística → ' + EXTRAS[etiqueta].videos] : []),
     ...(verificado ? [] : ['⚠️ REVISAR: Cloudflare no pudo confirmar que sea una persona (puede ser un robot).']),
     '',
     'Nombre: ' + c.nombre,
