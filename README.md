@@ -27,13 +27,11 @@ Formulario de calificación de Fénix Ventures, la vertical logística de Dropi.
     - Descartados y seguimiento: solo PageView (los de seguimiento también `Filtro_1`).
     - Coincidencia avanzada manual (21-nov-2026, `pixDatos`): al tocar «Ver horarios», el píxel recibe solo el correo y el WhatsApp del lead (con indicativo), nunca los del socio ni el invitado, y los cifra antes de enviarlos. Van en `Lead_Valido`, `Lead_Calificado`, `Calificado_*` y `Schedule`; `PageView` y `Filtro_1` salen sin datos. Complementa al píxel: si Meta no reconoce los datos, el evento cuenta igual.
     - Los eventos automáticos de botones de Meta (`SubscribedButtonClick`) están apagados en el código (`autoConfig` en falso). La coincidencia avanzada automática de Meta debe seguir apagada: leería el WhatsApp sin indicativo y podría tomar el correo del socio o del invitado. Las demás direcciones no cargan nada de Meta.
-- **Logo animado de la portada** (`logos/fenix-anima.webp`, 180 KB):
-  - Son los primeros 5 s del video del fénix que entregó Daniel el 13-nov-2026: el fénix vuela, forma el logo, sale un destello y quedan chispas.
-  - El logo queda quieto, sin el fondo oscuro del video, y la animación va pintada sobre el verde de la portada a 12 cuadros por segundo.
-  - La portada abre con el logo oficial. La animación se baja después, corre una vez por visita y al final se funde en el logo oficial.
-  - No corre con ahorro de datos, conexión 2G ni «menos movimiento».
-  - El programa que la arma está en `formulario-dforms/herramientas/logo-animar.mjs`.
-  - La alternativa sobria, un brillo de sol solo con CSS, está en la rama `logo-sol`.
+- **Portada** (27-nov-2026, pedido de Daniel tras revisar la pauta): el título es «Inicia tu Diagnóstico Gratis», el mismo «diagnóstico» que ofrecen los anuncios (antes decía «Consultoría Logística Gratis»). Es igual en todas las direcciones.
+- **Brillo alrededor del logo de la portada** (elegido por Daniel el 27-nov-2026):
+  - Al abrir, una luz dorada con rayos suaves alumbra detrás del logo oficial durante 1,5 s y vuelve a quedar normal.
+  - Es solo CSS, sin archivos extra: suma menos de 1 KB. Su tamaño (`--sol`, en `sizeEmb`) nunca pasa del espacio libre, así que no se corta en celulares chicos. No corre con «menos movimiento».
+  - Reemplazó al fénix animado (`logos/fenix-anima.webp`, 165 KB), que triplicaba el peso de la portada. Ese archivo ya no está en el repositorio; sigue en el historial y en la rama `logo-animado`, y su programa en `formulario-dforms/herramientas/logo-animar.mjs`.
 - **Sin bajar en ninguna pantalla** (pedido de Daniel, 13-nov-2026): la tarjeta mide lo visible de la pantalla (`100svh`; en computador, hasta 780 px).
   - Si una pantalla no cabe, `ajustar()` (app.js) la compacta: `k1` achica márgenes e íconos; `k2` pone las opciones en fila, con el ícono al lado del texto; y como último recurso reduce todo parejo (`zoom`, hasta 0,55).
   - Se vuelve a medir con cada cambio de la pantalla, al cargar las letras y al girar el celular, pero no mientras se escribe.
@@ -45,7 +43,7 @@ Formulario de calificación de Fénix Ventures, la vertical logística de Dropi.
   - Dura lo mismo que esa animación (`CARGA_MS`, 3,8 s), y el conteo arranca cuando la animación ya se puede ver, así el 100 % llega cuando Dropi sale.
   - La animación se baja en segundo plano y se guarda en memoria (por eso la política de la página permite imágenes `blob:`): así empieza desde el principio cada vez que sale la pantalla, también tras «Volver a empezar».
   - El nombre se muestra con mayúscula inicial si lo escribieron todo en minúscula o todo en mayúscula; a GHL va tal cual.
-- Pensada para cargar rápido: la portada baja unos 63 KB en total, con letras recortadas en WOFF2 e imágenes en WebP. Los íconos de las preguntas se precargan en segundo plano.
+- Pensada para cargar rápido: la portada baja unos 75 KB en total, con letras recortadas en WOFF2 e imágenes en WebP. Los íconos de las preguntas se precargan en segundo plano.
 - **Medición del recorrido:** la página manda a `/api/evento` cada pantalla, respuesta, aviso de error, toque fuera de botón y salida, sin datos personales. Todo queda en la base D1 `fenix-formulario-visitas` (enlace `DB`), y cada visita se une al contacto de GHL cuando deja sus datos.
 - **Panel privado:** `/panel` muestra el embudo, dónde se va la gente, las respuestas, los tiempos y el recorrido de cada persona. Pide la clave `PANEL_KEY` guardada en Cloudflare.
 - **Anti-robots:** Turnstile de Cloudflare en modo invisible desde el 13-nov-2026 (pedido de Daniel): nunca se ve ni pide clic, ni siquiera cuando Cloudflare duda.
